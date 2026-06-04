@@ -8,9 +8,6 @@ use App\Core\Database;
 
 class CardModel
 {
-    // Fully implemented in PHASE-3 STEP-28.
-    // Stub here to allow MemberController kick to compile.
-
     public static function findById(int $id): ?array
     {
         $db   = Database::getInstance();

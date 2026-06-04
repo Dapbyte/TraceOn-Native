@@ -9,8 +9,10 @@ use App\Core\CsrfManager;
 use App\Core\Database;
 use App\Models\WorkspaceModel;
 use App\Models\MemberModel;
+use App\Models\CardModel;
 use App\Models\LoginAttemptModel;
 use App\Helpers\ActivityLogger;
+use App\Helpers\ProgressCalculator;
 
 class WorkspaceController extends BaseController
 {
@@ -43,8 +45,24 @@ class WorkspaceController extends BaseController
             Response::notFound($this->request->isApi());
         }
 
-        $members         = MemberModel::listForWorkspace($id);
-        $pendingMembers  = MemberModel::listPendingForWorkspace($id);
+        $userId         = (int)$_SESSION['user_id'];
+        $members        = MemberModel::listForWorkspace($id);
+        $pendingMembers = MemberModel::listPendingForWorkspace($id);
+        $cards          = CardModel::listForWorkspace($id);
+
+        // Attach progress + access info to each card
+        foreach ($cards as &$card) {
+            $cardId             = (int)$card['id'];
+            $card['progress']   = ProgressCalculator::forCard($cardId);
+            $card['access_users'] = CardModel::accessUserIds($cardId);
+            $card['user_has_access'] = (
+                in_array($membership['role'], ['Owner', 'Admin'], true)
+                || CardModel::userHasAccess($cardId, $userId)
+            );
+        }
+        unset($card);
+
+        $wsProgress = ProgressCalculator::forWorkspace($id);
 
         $this->render('pages.workspace', [
             'layout'         => 'layouts.main',
@@ -54,6 +72,8 @@ class WorkspaceController extends BaseController
             'membership'     => $membership,
             'members'        => $members,
             'pendingMembers' => $pendingMembers,
+            'cards'          => $cards,
+            'wsProgress'     => $wsProgress,
         ]);
     }
 

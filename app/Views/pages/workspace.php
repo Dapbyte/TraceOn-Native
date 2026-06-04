@@ -55,8 +55,15 @@ if ($deadline) {
 
 <!-- ─── Tab: Dashboard (card grid) ────────────────────────────────────────── -->
 <div id="tab-dashboard" class="tab-content page-content">
+
     <?php if ($isAdmin): ?>
-    <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-6);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);flex-wrap:wrap;gap:12px;">
+        <div>
+            <span style="font-size:var(--text-sm);color:var(--text-muted);">
+                Progress workspace:
+                <strong style="color:var(--color-secondary);"><?= $wsProgress ?? 0 ?>%</strong>
+            </span>
+        </div>
         <button type="button" class="btn btn-primary" id="btn-new-card">
             <span class="iconify" data-icon="ph:plus-bold" style="width:16px;height:16px"></span>
             Tambah Card
@@ -64,19 +71,137 @@ if ($deadline) {
     </div>
     <?php endif; ?>
 
-    <!-- Card grid rendered in PHASE-3 -->
-    <div class="card-grid" id="card-grid">
-        <div class="empty-state" style="grid-column:1/-1;padding:var(--space-8) 0;">
-            <span class="iconify" data-icon="ph:squares-four-bold" style="width:48px;height:48px;color:var(--color-border)"></span>
-            <p class="empty-state-text">Belum ada card di workspace ini</p>
-            <?php if ($isAdmin): ?>
-            <button type="button" class="btn btn-primary btn-sm" id="empty-new-card">
-                <span class="iconify" data-icon="ph:plus-bold" style="width:14px;height:14px"></span>
-                Tambah Card
-            </button>
-            <?php endif; ?>
-        </div>
+    <?php if (empty($cards)): ?>
+    <div class="empty-state" style="min-height:40vh;">
+        <span class="iconify" data-icon="ph:squares-four-bold" style="width:48px;height:48px;color:var(--color-border)"></span>
+        <p class="empty-state-text">Belum ada card di workspace ini</p>
+        <?php if ($isAdmin): ?>
+        <button type="button" class="btn btn-primary btn-sm" id="empty-new-card">
+            <span class="iconify" data-icon="ph:plus-bold" style="width:14px;height:14px"></span>
+            Tambah Card
+        </button>
+        <?php endif; ?>
     </div>
+    <?php else: ?>
+
+    <div class="card-grid" id="card-grid">
+    <?php foreach ($cards as $c):
+        $cId         = (int)$c['id'];
+        $cTitle      = htmlspecialchars($c['title'],    ENT_QUOTES, 'UTF-8');
+        $cDeadline   = $c['deadline'] ?? null;
+        $cProgress   = (int)($c['progress'] ?? 0);
+        $cTotal      = (int)($c['total_todos'] ?? 0);
+        $cDone       = (int)($c['done_todos'] ?? 0);
+        $cHasAccess  = (bool)($c['user_has_access'] ?? false);
+        $cAccessUsers = $c['access_users'] ?? [];
+
+        // Deadline badge
+        $dBadge = '';
+        if ($cDeadline) {
+            $dDiff   = (new DateTime($cDeadline))->diff(new DateTime());
+            $dIsPast = (new DateTime($cDeadline)) < new DateTime();
+            $dDays   = $dDiff->days;
+            $dBadge  = ($dIsPast || $dDays < 3) ? 'badge-error' : 'badge-warning';
+        }
+    ?>
+    <div class="card-wrapper" style="position:relative;">
+        <div class="card"
+             data-card-id="<?= $cId ?>"
+             data-deadline="<?= htmlspecialchars($cDeadline ?? '', ENT_QUOTES, 'UTF-8') ?>"
+             style="cursor:pointer;">
+
+            <!-- Card header -->
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--space-3);gap:8px;">
+                <h3 class="card-title" style="flex:1;"><?= $cTitle ?></h3>
+
+                <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                    <?php if (!$cHasAccess): ?>
+                    <span class="badge badge-readonly">Hanya Baca</span>
+                    <?php endif; ?>
+
+                    <?php if ($isAdmin): ?>
+                    <button
+                        type="button"
+                        class="card-ellipsis-btn"
+                        data-card-id="<?= $cId ?>"
+                        data-card-title="<?= $cTitle ?>"
+                        data-is-admin="true"
+                        aria-label="Opsi card"
+                        style="width:28px;height:28px;border-radius:var(--radius-sm);background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted);opacity:0;transition:opacity 0.2s;"
+                    >
+                        <span class="iconify" data-icon="ph:dots-three-vertical-bold" style="width:16px;height:16px"></span>
+                    </button>
+
+                    <!-- Desktop dropdown -->
+                    <div class="card-dropdown"
+                         style="display:none;position:absolute;top:44px;right:8px;background:var(--color-background);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);min-width:160px;z-index:50;overflow:hidden;">
+                        <button type="button"
+                                onclick="handleCardAction('edit', <?= $cId ?>, '<?= addslashes($c['title']) ?>')"
+                                style="width:100%;padding:10px 16px;text-align:left;background:none;border:none;cursor:pointer;font-size:var(--text-sm);display:flex;align-items:center;gap:8px;">
+                            <span class="iconify" data-icon="ph:pencil-bold" style="width:14px;height:14px"></span>Edit Card
+                        </button>
+                        <button type="button"
+                                onclick="handleCardAction('access', <?= $cId ?>, '<?= addslashes($c['title']) ?>')"
+                                style="width:100%;padding:10px 16px;text-align:left;background:none;border:none;cursor:pointer;font-size:var(--text-sm);display:flex;align-items:center;gap:8px;">
+                            <span class="iconify" data-icon="ph:users-bold" style="width:14px;height:14px"></span>Kelola Akses
+                        </button>
+                        <hr style="margin:0;border-color:var(--color-border);">
+                        <button type="button"
+                                onclick="handleCardAction('delete', <?= $cId ?>, '<?= addslashes($c['title']) ?>')"
+                                style="width:100%;padding:10px 16px;text-align:left;background:none;border:none;cursor:pointer;font-size:var(--text-sm);color:var(--color-error);display:flex;align-items:center;gap:8px;">
+                            <span class="iconify" data-icon="ph:trash-bold" style="width:14px;height:14px"></span>Hapus Card
+                        </button>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="progress-track" style="margin-bottom:var(--space-2);">
+                <div class="progress-bar-fill <?= $cProgress >= 100 ? 'progress-complete' : '' ?>"
+                     data-card-id="<?= $cId ?>"
+                     style="width:<?= $cProgress ?>%;">
+                </div>
+            </div>
+            <p class="progress-ratio text-sm text-muted" data-card-id="<?= $cId ?>" style="margin-bottom:var(--space-3);">
+                <?= $cDone ?>/<?= $cTotal ?> selesai
+            </p>
+
+            <!-- Deadline badge -->
+            <?php if ($cDeadline): ?>
+            <div style="margin-bottom:var(--space-3);">
+                <span class="badge <?= $dBadge ?>" style="font-size:11px;">
+                    <span class="iconify" data-icon="ph:calendar-bold" style="width:11px;height:11px;margin-right:3px;"></span>
+                    <?= htmlspecialchars($cDeadline, ENT_QUOTES, 'UTF-8') ?>
+                </span>
+            </div>
+            <?php endif; ?>
+
+            <!-- Access user avatars (max 3 + overflow) -->
+            <?php if (!empty($cAccessUsers)): ?>
+            <div style="display:flex;align-items:center;gap:-4px;">
+                <?php foreach (array_slice($cAccessUsers, 0, 3) as $au): ?>
+                <div title="<?= htmlspecialchars($au['name'], ENT_QUOTES, 'UTF-8') ?>"
+                     style="width:24px;height:24px;border-radius:var(--radius-full);border:2px solid var(--color-background);overflow:hidden;background:var(--color-secondary);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;margin-right:-4px;">
+                    <?php if ($au['avatar_path']): ?>
+                        <img src="<?= htmlspecialchars($au['avatar_path'], ENT_QUOTES, 'UTF-8') ?>" alt="" style="width:100%;height:100%;object-fit:cover;">
+                    <?php else: ?>
+                        <?= mb_strtoupper(mb_substr($au['name'], 0, 1)) ?>
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+                <?php if (count($cAccessUsers) > 3): ?>
+                <span class="badge badge-neutral" style="font-size:10px;padding:2px 6px;margin-left:4px;">
+                    +<?= count($cAccessUsers) - 3 ?>
+                </span>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+        </div><!-- .card -->
+    </div><!-- .card-wrapper -->
+    <?php endforeach; ?>
+    </div><!-- .card-grid -->
+    <?php endif; ?>
 </div>
 
 <!-- ─── Tab: Anggota ──────────────────────────────────────────────────────── -->
@@ -314,6 +439,120 @@ if ($deadline) {
     </div>
 </div>
 
+<!-- ─── Card Modals ───────────────────────────────────────────────────────── -->
+
+<!-- Modal: New Card -->
+<div class="modal-backdrop" id="modal-new-card" style="display:none;" role="dialog" aria-modal="true">
+    <div class="modal">
+        <h2 class="modal-title">Tambah Card Baru</h2>
+        <form id="form-new-card" novalidate>
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label" for="new-card-title">Judul Card</label>
+                <input type="text" id="new-card-title" class="form-control" placeholder="Contoh: Desain Antarmuka" maxlength="100" required>
+            </div>
+            <div class="form-group" style="margin-bottom:24px;">
+                <label class="form-label" for="new-card-deadline">Deadline <span style="color:var(--text-muted);font-weight:400;">(opsional)</span></label>
+                <input type="date" id="new-card-deadline" class="form-control">
+            </div>
+            <div class="form-error" id="error-card-general" style="display:none;margin-bottom:12px;"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('modal-new-card').style.display='none'">Batal</button>
+                <button type="submit" class="btn btn-primary" id="btn-card-submit">Buat Card</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Edit Card -->
+<div class="modal-backdrop" id="modal-edit-card" style="display:none;" role="dialog" aria-modal="true">
+    <div class="modal">
+        <h2 class="modal-title">Edit Card</h2>
+        <form id="form-edit-card" novalidate>
+            <input type="hidden" id="edit-card-id">
+            <div class="form-group" style="margin-bottom:16px;">
+                <label class="form-label" for="edit-card-title">Judul Card</label>
+                <input type="text" id="edit-card-title" class="form-control" maxlength="100" required>
+            </div>
+            <div class="form-group" style="margin-bottom:24px;">
+                <label class="form-label" for="edit-card-deadline">Deadline</label>
+                <input type="date" id="edit-card-deadline" class="form-control">
+            </div>
+            <div class="form-error" id="error-edit-card" style="display:none;margin-bottom:12px;"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('modal-edit-card').style.display='none'">Batal</button>
+                <button type="submit" class="btn btn-primary" id="btn-edit-card-submit">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Delete Card -->
+<div class="modal-backdrop" id="modal-delete-card" style="display:none;" role="dialog" aria-modal="true">
+    <div class="modal">
+        <h2 class="modal-title" style="color:var(--color-error);">Hapus Card</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;">
+            Hapus card <strong id="delete-card-name"></strong>? Semua todo di dalamnya akan ikut terhapus. Tindakan ini tidak dapat dibatalkan.
+        </p>
+        <input type="hidden" id="delete-card-id">
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="btn-delete-card-cancel">Batal</button>
+            <button type="button" class="btn btn-danger" id="btn-delete-card-confirm">Hapus</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Card Access -->
+<div class="modal-backdrop" id="modal-card-access" style="display:none;" role="dialog" aria-modal="true">
+    <div class="modal">
+        <h2 class="modal-title">Kelola Akses Card</h2>
+        <input type="hidden" id="access-card-id">
+        <div id="access-member-list" style="margin-bottom:16px;max-height:300px;overflow-y:auto;">
+            <?php foreach ($members as $m):
+                if ($m['status'] !== 'Approved' || in_array($m['role'], ['Owner','Admin'])) continue;
+                $mUserId = (int)$m['user_id'];
+                $mName   = htmlspecialchars($m['user_name'], ENT_QUOTES, 'UTF-8');
+            ?>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--color-border);" data-access-user-id="<?= $mUserId ?>">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;border-radius:var(--radius-full);background:var(--color-secondary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;">
+                        <?= mb_strtoupper(mb_substr($m['user_name'], 0, 1)) ?>
+                    </div>
+                    <span style="font-size:var(--text-sm);"><?= $mName ?></span>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="grantAccess(this, <?= $mUserId ?>)">Beri Akses</button>
+                    <button type="button" class="btn btn-sm btn-outline" style="color:var(--color-error);border-color:var(--color-error);" onclick="revokeAccess(this, <?= $mUserId ?>)">Cabut</button>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('modal-card-access').style.display='none'">Selesai</button>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile bottom sheet context menu -->
+<div id="card-sheet-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:290;"></div>
+<div id="card-bottom-sheet" style="position:fixed;bottom:0;left:0;right:0;background:var(--color-background);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:var(--space-4);z-index:300;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);max-height:80vh;overflow-y:auto;">
+    <div style="width:40px;height:4px;background:var(--color-border);border-radius:var(--radius-full);margin:0 auto var(--space-4);"></div>
+    <p id="sheet-card-title" style="font-weight:600;margin-bottom:var(--space-4);font-family:var(--font-heading);"></p>
+    <div id="sheet-actions" style="display:flex;flex-direction:column;gap:4px;"></div>
+</div>
+
+<style>
+#card-sheet-backdrop.visible  { display:block; }
+#card-bottom-sheet.open       { transform:translateY(0); }
+.sheet-action {
+    display:flex;align-items:center;gap:12px;padding:14px 12px;
+    border-radius:var(--radius-md);background:none;border:none;cursor:pointer;
+    font-size:var(--text-body);font-weight:500;color:var(--text-primary);
+    transition:background-color 0.2s;
+}
+.sheet-action:hover { background:var(--color-surface); }
+.sheet-action-danger { color:var(--color-error); }
+</style>
+
 <script type="module">
 import { apiPost, apiGet } from '/js/modules/api.js';
 import { showToast }       from '/js/modules/toast.js';
@@ -490,4 +729,122 @@ document.getElementById('btn-delete-confirm')?.addEventListener('click', async (
         window.location.href = res.data?.redirect ?? '/dashboard';
     } catch (err) { showToast(err.message, 'error'); }
 });
+
+// ─── Card: ellipsis button hover show ────────────────────────────────────────
+document.querySelectorAll('.card-wrapper').forEach(wrapper => {
+    const btn = wrapper.querySelector('.card-ellipsis-btn');
+    if (!btn) return;
+    wrapper.addEventListener('mouseenter', () => btn.style.opacity = '1');
+    wrapper.addEventListener('mouseleave', () => btn.style.opacity = '0');
+});
+
+// ─── Card: init card grid module ─────────────────────────────────────────────
+import { initCardGrid, handleCardAction, updateProgressBar } from '/js/modules/card.js';
+initCardGrid(WS_ID, <?= $isAdmin ? 'true' : 'false' ?>);
+
+// Expose handleCardAction globally (used in inline onclick in PHP-rendered HTML)
+window.handleCardAction = handleCardAction;
+window.updateProgressBar = updateProgressBar;
+
+// ─── Card: Create ─────────────────────────────────────────────────────────────
+['btn-new-card','empty-new-card'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', () => openModal('modal-new-card'));
+});
+
+document.getElementById('form-new-card')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn  = document.getElementById('btn-card-submit');
+    const errG = document.getElementById('error-card-general');
+    errG.style.display = 'none';
+    btn.disabled = true; btn.textContent = 'Membuat...';
+
+    try {
+        await apiPost('/api/card/create', {
+            workspace_id: WS_ID,
+            title:        document.getElementById('new-card-title').value,
+            deadline:     document.getElementById('new-card-deadline').value,
+        });
+        closeModal('modal-new-card');
+        showToast('Card berhasil dibuat', 'success');
+        setTimeout(() => location.reload(), 600);
+    } catch (err) {
+        btn.disabled = false; btn.textContent = 'Buat Card';
+        errG.textContent = err.message; errG.style.display = 'flex';
+    }
+});
+
+// ─── Card: Edit ───────────────────────────────────────────────────────────────
+document.getElementById('form-edit-card')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cardId = document.getElementById('edit-card-id').value;
+    const btn    = document.getElementById('btn-edit-card-submit');
+    btn.disabled = true; btn.textContent = 'Menyimpan...';
+    try {
+        await apiPost('/api/card/update', {
+            card_id:      parseInt(cardId),
+            workspace_id: WS_ID,
+            title:        document.getElementById('edit-card-title').value,
+            deadline:     document.getElementById('edit-card-deadline').value || null,
+            _method:      'PATCH',
+        });
+        closeModal('modal-edit-card');
+        showToast('Card diperbarui', 'success');
+        setTimeout(() => location.reload(), 600);
+    } catch (err) {
+        btn.disabled = false; btn.textContent = 'Simpan';
+        document.getElementById('error-edit-card').textContent = err.message;
+        document.getElementById('error-edit-card').style.display = 'flex';
+    }
+});
+
+// ─── Card: Delete ─────────────────────────────────────────────────────────────
+document.getElementById('btn-delete-card-confirm')?.addEventListener('click', async () => {
+    const cardId = document.getElementById('delete-card-id').value;
+    closeModal('modal-delete-card');
+    try {
+        await apiPost('/api/card/delete', {
+            card_id:      parseInt(cardId),
+            workspace_id: WS_ID,
+            _method:      'DELETE',
+        });
+        const wrapper = document.querySelector(`.card-wrapper:has([data-card-id="${cardId}"])`);
+        if (wrapper) { wrapper.style.opacity = '0'; setTimeout(() => wrapper.remove(), 300); }
+        showToast('Card dihapus', 'success');
+    } catch (err) { showToast(err.message, 'error'); }
+});
+document.getElementById('btn-delete-card-cancel')?.addEventListener('click', () => closeModal('modal-delete-card'));
+
+// ─── Card Access: grant/revoke ────────────────────────────────────────────────
+window.grantAccess = async (btn, userId) => {
+    const cardId = document.getElementById('access-card-id').value;
+    btn.disabled = true;
+    try {
+        await apiPost('/api/card/access/grant', {
+            card_id:      parseInt(cardId),
+            workspace_id: WS_ID,
+            user_id:      userId,
+        });
+        showToast('Akses diberikan', 'success');
+    } catch (err) {
+        btn.disabled = false;
+        showToast(err.message, 'error');
+    }
+};
+
+window.revokeAccess = async (btn, userId) => {
+    const cardId = document.getElementById('access-card-id').value;
+    btn.disabled = true;
+    try {
+        await apiPost('/api/card/access/revoke', {
+            card_id:      parseInt(cardId),
+            workspace_id: WS_ID,
+            user_id:      userId,
+            _method:      'DELETE',
+        });
+        showToast('Akses dicabut', 'success');
+    } catch (err) {
+        btn.disabled = false;
+        showToast(err.message, 'error');
+    }
+};
 </script>

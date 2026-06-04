@@ -9,6 +9,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Core\CsrfManager;
 use App\Models\MemberModel;
+use App\Models\WorkspaceModel;
 
 abstract class BaseController
 {
@@ -95,6 +96,13 @@ abstract class BaseController
         // Determine layout
         $layoutKey  = $data['layout'] ?? null;
         unset($data['layout']);
+
+        // Inject sidebar data for main layout
+        if ($layoutKey === 'layouts.main' && !empty($_SESSION['user_id'])) {
+            $userId = (int)$_SESSION['user_id'];
+            if (!isset($data['ownedWorkspaces']))  $data['ownedWorkspaces']  = WorkspaceModel::listOwned($userId);
+            if (!isset($data['joinedWorkspaces'])) $data['joinedWorkspaces'] = WorkspaceModel::listJoined($userId);
+        }
 
         // Capture view output into $content
         extract($data, EXTR_SKIP);

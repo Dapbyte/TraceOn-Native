@@ -1,0 +1,361 @@
+/* ─── TraceOn — Component Styles ─────────────────────────────────────────── */
+/* Buttons, inputs, cards, progress, modal, toast, badges. Tokens only — no hardcoded colors. */
+
+/* ─── Buttons ────────────────────────────────────────────────────────────── */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) 20px;
+    height: 40px;
+    font-size: var(--text-button);
+    font-weight: 600;
+    line-height: 1;
+    border-radius: var(--radius-md);
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: background-color var(--transition-base),
+                border-color     var(--transition-base),
+                box-shadow       var(--transition-base),
+                transform        0.1s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn:disabled,
+.btn[disabled] {
+    background-color: var(--color-neutral-200);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+    opacity: 0.6;
+    border-color: transparent;
+}
+
+.btn-primary {
+    background-color: var(--color-secondary);
+    color: #FFFFFF;
+}
+.btn-primary:hover:not(:disabled) {
+    background-color: #2E85C8;
+}
+.btn-primary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(75, 163, 227, 0.4);
+}
+.btn-primary:active:not(:disabled) {
+    background-color: #1A65A0;
+    transform: scale(0.98);
+}
+
+.btn-danger {
+    background-color: var(--color-error);
+    color: #FFFFFF;
+}
+.btn-danger:hover:not(:disabled) {
+    background-color: #D32F2F;
+}
+.btn-danger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.4);
+}
+.btn-danger:active:not(:disabled) {
+    background-color: #B71C1C;
+    transform: scale(0.98);
+}
+
+.btn-outline {
+    background-color: transparent;
+    color: var(--text-primary);
+    border-color: var(--color-input-border);
+}
+.btn-outline:hover:not(:disabled) {
+    background-color: var(--color-primary-5);
+    border-color: var(--color-secondary);
+    color: var(--color-primary);
+}
+.btn-outline:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(33, 117, 184, 0.25);
+}
+
+.btn-sm {
+    height: 32px;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+}
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: var(--radius-md);
+}
+
+/* ─── Form Controls ──────────────────────────────────────────────────────── */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.form-label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    background-color: var(--color-background);
+    border: 1.5px solid var(--color-input-border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--text-body);
+    line-height: var(--text-body-line);
+    transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+.form-control:hover:not(:disabled) {
+    border-color: var(--color-secondary);
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(75, 163, 227, 0.2);
+}
+.form-control:disabled {
+    background-color: var(--color-surface);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.form-control.is-error {
+    border-color: var(--color-error);
+}
+
+.form-error {
+    font-size: var(--text-sm);
+    color: var(--color-error);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.form-helper {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+/* ─── Progress Bar ───────────────────────────────────────────────────────── */
+
+.progress-track {
+    height: 8px;
+    background: var(--color-neutral-200);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--color-secondary);
+    border-radius: var(--radius-sm);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                background-color 0.3s ease;
+}
+
+.progress-bar-fill.progress-complete {
+    background: var(--color-success);
+}
+
+/* ─── Badges ─────────────────────────────────────────────────────────────── */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    line-height: var(--text-sm-line);
+    white-space: nowrap;
+}
+
+.badge-success {
+    background-color: rgba(46, 125, 50, 0.12);
+    color: var(--color-success);
+}
+
+.badge-warning {
+    background-color: rgba(180, 83, 9, 0.12);
+    color: var(--color-warning);
+}
+
+.badge-error {
+    background-color: rgba(198, 40, 40, 0.12);
+    color: var(--color-error);
+}
+
+.badge-info {
+    background-color: rgba(21, 101, 192, 0.12);
+    color: var(--color-info);
+}
+
+.badge-neutral {
+    background-color: var(--color-neutral-100);
+    color: var(--color-neutral-600);
+}
+
+.badge-readonly {
+    background-color: var(--color-neutral-100);
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+/* ─── Card Component ─────────────────────────────────────────────────────── */
+
+.card {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-4);
+    transition: all 0.25s ease-out;
+}
+
+.card:hover {
+    border-color: rgba(33, 117, 184, 0.5);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.card-title {
+    font-family: var(--font-heading);
+    font-size: var(--text-h3);
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ─── Toast ──────────────────────────────────────────────────────────────── */
+
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column-reverse;
+    gap: var(--space-2);
+    max-width: 360px;
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    pointer-events: all;
+    max-width: 360px;
+}
+
+.toast-success { border-left: 4px solid var(--color-success); }
+.toast-error   { border-left: 4px solid var(--color-error); }
+.toast-warning { border-left: 4px solid var(--color-warning); }
+.toast-info    { border-left: 4px solid var(--color-info); }
+
+.toast-message {
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    flex: 1;
+    line-height: var(--text-sm-line);
+}
+
+.toast-close {
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 1;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 16px;
+}
+
+/* ─── Modal ──────────────────────────────────────────────────────────────── */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: var(--z-backdrop);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: modalBackdropIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal {
+    background-color: var(--color-background);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-6);
+    width: min(480px, calc(100vw - var(--space-8)));
+    max-height: calc(100vh - var(--space-8));
+    overflow-y: auto;
+    z-index: var(--z-modal);
+    animation: modalContentIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-title {
+    font-family: var(--font-heading);
+    font-size: var(--text-h2);
+    font-weight: 600;
+    margin-bottom: var(--space-4);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+}
+
+/* Mobile: full-screen modal */
+@media (max-width: 639px) {
+    .modal-backdrop {
+        align-items: flex-end;
+    }
+    .modal {
+        width: 100vw;
+        max-height: 90vh;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .modal.modal-fullscreen {
+        width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+}
+
+/* ─── Divider ────────────────────────────────────────────────────────────── */
+
+.divider {
+    height: 1px;
+    background-color: var(--color-border);
+    border: none;
+    margin: var(--space-4) 0;
+}

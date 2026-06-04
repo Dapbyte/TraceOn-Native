@@ -1,0 +1,6 @@
+.env
+vendor/
+public/uploads/avatars/*
+!public/uploads/avatars/.gitkeep
+config/php.ini
+*.log

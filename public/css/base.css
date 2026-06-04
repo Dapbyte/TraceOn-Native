@@ -1,0 +1,117 @@
+/* ─── TraceOn — Base Styles ───────────────────────────────────────────────── */
+/* Reset + base element styling. Uses tokens from tokens.css. No hardcoded colors. */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: var(--text-body-line);
+    color: var(--text-primary);
+    background-color: var(--color-background);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    color: var(--text-primary);
+}
+
+h1 { font-size: var(--text-h1); line-height: var(--text-h1-line); font-weight: 700; }
+h2 { font-size: var(--text-h2); line-height: var(--text-h2-line); font-weight: 600; }
+h3 { font-size: var(--text-h3); line-height: var(--text-h3-line); font-weight: 600; }
+
+a {
+    color: var(--text-link);
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+button {
+    cursor: pointer;
+    font-family: var(--font-body);
+    border: none;
+    background: none;
+}
+
+input, select, textarea {
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+}
+
+ul, ol {
+    list-style: none;
+}
+
+/* ─── Utilities ──────────────────────────────────────────────────────────── */
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.text-muted   { color: var(--text-muted); }
+.text-primary { color: var(--text-primary); }
+.text-sm      { font-size: var(--text-sm); line-height: var(--text-sm-line); }
+
+/* ─── Shimmer Skeleton ───────────────────────────────────────────────────── */
+
+@keyframes shimmer {
+    0%   { background-position: -450px 0; }
+    100% { background-position:  450px 0; }
+}
+
+.skeleton-shimmer {
+    background: linear-gradient(to right, #E8EDF3 8%, #F4F7FB 18%, #E8EDF3 33%);
+    background-size: 800px 104px;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: var(--radius-sm);
+}
+
+/* ─── Toast Animations ───────────────────────────────────────────────────── */
+
+@keyframes toastSlideIn {
+    0%   { transform: translateX(120%) translateY(0); opacity: 0; }
+    100% { transform: translateX(0)    translateY(0); opacity: 1; }
+}
+
+.toast-animate-in {
+    animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Modal Animations ───────────────────────────────────────────────────── */
+
+@keyframes modalBackdropIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes modalContentIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}

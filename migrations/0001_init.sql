@@ -115,10 +115,12 @@ CREATE TABLE IF NOT EXISTS activities (
 CREATE TABLE IF NOT EXISTS login_attempts (
   id              INT AUTO_INCREMENT PRIMARY KEY,
   ip_address      VARCHAR(45) NOT NULL,
+  type            VARCHAR(20) NOT NULL DEFAULT 'login',
   attempt_count   SMALLINT UNSIGNED NOT NULL DEFAULT 1,
   last_attempt_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   blocked_until   TIMESTAMP NULL DEFAULT NULL,
-  INDEX idx_la_ip_address (ip_address)
+  INDEX idx_la_ip_address (ip_address),
+  INDEX idx_la_ip_type    (ip_address, type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET FOREIGN_KEY_CHECKS = 1;

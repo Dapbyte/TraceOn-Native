@@ -8,6 +8,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\CsrfManager;
+use App\Models\MemberModel;
 
 abstract class BaseController
 {
@@ -66,11 +67,10 @@ abstract class BaseController
         return $membership;
     }
 
-    // Placeholder — replaced by real MemberModel::getMembership in STEP-19
+    // Live DB fetch — never from session (INV-08, RULE-05)
     private function getMembershipLive(int $userId, int $workspaceId): ?array
     {
-        // Will be replaced: return \App\Models\MemberModel::getMembership($userId, $workspaceId);
-        return null;
+        return MemberModel::getMembership($userId, $workspaceId);
     }
 
     protected function json(array $payload, int $status = 200): never
@@ -78,15 +78,38 @@ abstract class BaseController
         Response::json($payload, $status);
     }
 
+    /**
+     * Render a view inside a layout.
+     * $data['layout'] overrides default layout ('layouts.main' or 'layouts.auth').
+     * View file captures its output into $content, then layout renders it.
+     */
     protected function render(string $view, array $data = []): void
     {
-        $viewPath = __DIR__ . '/../Views/' . str_replace('.', '/', $view) . '.php';
+        $viewsDir = __DIR__ . '/../Views/';
+        $viewPath = $viewsDir . str_replace('.', '/', $view) . '.php';
 
         if (!file_exists($viewPath)) {
             Response::error('SERVER_ERROR', 'View tidak ditemukan: ' . $view, 500);
         }
 
+        // Determine layout
+        $layoutKey  = $data['layout'] ?? null;
+        unset($data['layout']);
+
+        // Capture view output into $content
         extract($data, EXTR_SKIP);
+        ob_start();
         require $viewPath;
+        $content = ob_get_clean();
+
+        if ($layoutKey) {
+            $layoutPath = $viewsDir . str_replace('.', '/', $layoutKey) . '.php';
+            if (!file_exists($layoutPath)) {
+                Response::error('SERVER_ERROR', 'Layout tidak ditemukan: ' . $layoutKey, 500);
+            }
+            require $layoutPath;
+        } else {
+            echo $content;
+        }
     }
 }

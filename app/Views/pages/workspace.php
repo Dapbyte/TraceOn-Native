@@ -199,6 +199,106 @@ if ($deadline) {
             <?php endif; ?>
         </div><!-- .card -->
     </div><!-- .card-wrapper -->
+
+    <div class="modal-backdrop card-detail-backdrop"
+         id="card-detail-<?= $cId ?>"
+         data-todo-card-id="<?= $cId ?>"
+         data-can-edit="<?= $cHasAccess ? 'true' : 'false' ?>"
+         data-workspace-url="/workspace/<?= $wsId ?>"
+         style="display:none;"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="card-detail-title-<?= $cId ?>">
+        <div class="modal modal-fullscreen card-detail-modal">
+            <div class="card-detail-header">
+                <div class="card-detail-heading">
+                    <h2 class="card-detail-title" id="card-detail-title-<?= $cId ?>"><?= $cTitle ?></h2>
+                    <?php if (!$cHasAccess): ?>
+                    <span class="badge badge-readonly">Hanya Baca</span>
+                    <?php endif; ?>
+                </div>
+                <button type="button" class="btn btn-icon btn-outline card-detail-close" data-card-detail-close aria-label="Tutup detail card">
+                    <span class="iconify" data-icon="ph:x-bold" style="width:18px;height:18px"></span>
+                </button>
+            </div>
+
+            <div class="card-detail-progress">
+                <div class="progress-track">
+                    <div class="progress-bar-fill <?= $cProgress >= 100 ? 'progress-complete' : '' ?>"
+                         data-card-id="<?= $cId ?>"
+                         style="width:<?= $cProgress ?>%;"></div>
+                </div>
+                <p class="progress-ratio text-sm text-muted" data-card-id="<?= $cId ?>">
+                    <?= $cDone ?>/<?= $cTotal ?> selesai
+                </p>
+            </div>
+
+            <div class="todo-filter-group" role="group" aria-label="Filter todo">
+                <button type="button" class="todo-filter active" data-todo-filter="all">Semua</button>
+                <button type="button" class="todo-filter" data-todo-filter="done">Selesai</button>
+                <button type="button" class="todo-filter" data-todo-filter="in_progress">Dalam Proses</button>
+                <button type="button" class="todo-filter" data-todo-filter="pending">Belum</button>
+            </div>
+
+            <div class="todo-list" data-todo-list>
+                <?php if (empty($c['todos'])): ?>
+                <p class="todo-empty" data-todo-empty>Belum ada todo di card ini</p>
+                <?php else: ?>
+                <?php foreach ($c['todos'] as $todo):
+                    $todoId = (int)$todo['id'];
+                    $todoTitle = htmlspecialchars($todo['title'], ENT_QUOTES, 'UTF-8');
+                    $todoStatus = $todo['status'];
+                    $todoDone = $todoStatus === 'done';
+                    $todoInProgress = $todoStatus === 'in_progress';
+                    $todoLabel = $todoStatus === 'done' ? 'Selesai' : ($todoInProgress ? 'Sedang' : 'Belum');
+                ?>
+                <div class="todo-row <?= $todoDone ? 'is-done' : '' ?>" data-todo-id="<?= $todoId ?>" data-status="<?= htmlspecialchars($todoStatus, ENT_QUOTES, 'UTF-8') ?>">
+                    <?php if ($cHasAccess): ?>
+                    <button type="button" class="todo-checkbox <?= $todoDone ? 'is-checked' : '' ?>" data-todo-toggle aria-label="Ubah status todo">
+                        <span class="iconify todo-checkmark" data-icon="ph:check-bold"></span>
+                    </button>
+                    <?php else: ?>
+                    <span class="todo-checkbox <?= $todoDone ? 'is-checked' : '' ?>" aria-hidden="true">
+                        <span class="iconify todo-checkmark" data-icon="ph:check-bold"></span>
+                    </span>
+                    <?php endif; ?>
+
+                    <div class="todo-content">
+                        <p class="todo-title"><?= $todoTitle ?></p>
+                        <?php if ($todoInProgress): ?>
+                        <span class="badge badge-warning todo-status-badge">Sedang</span>
+                        <?php endif; ?>
+                    </div>
+
+                    <?php if ($cHasAccess): ?>
+                    <select class="form-control todo-status-select" data-todo-status aria-label="Status todo">
+                        <option value="pending" <?= $todoStatus === 'pending' ? 'selected' : '' ?>>Belum</option>
+                        <option value="in_progress" <?= $todoStatus === 'in_progress' ? 'selected' : '' ?>>Sedang</option>
+                        <option value="done" <?= $todoStatus === 'done' ? 'selected' : '' ?>>Selesai</option>
+                    </select>
+                    <div class="todo-actions">
+                        <button type="button" class="btn btn-icon btn-outline todo-delete-btn" data-todo-delete aria-label="Hapus todo">
+                            <span class="iconify" data-icon="ph:trash-bold" style="width:16px;height:16px"></span>
+                        </button>
+                    </div>
+                    <?php else: ?>
+                    <span class="badge <?= $todoDone ? 'badge-success' : ($todoInProgress ? 'badge-warning' : 'badge-neutral') ?>">
+                        <?= $todoLabel ?>
+                    </span>
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($cHasAccess): ?>
+            <form class="todo-create-form" data-todo-form>
+                <input type="text" class="form-control" data-todo-title maxlength="255" placeholder="Tambah todo baru" required>
+                <button type="submit" class="btn btn-primary" data-todo-submit>Simpan</button>
+            </form>
+            <?php endif; ?>
+        </div>
+    </div>
     <?php endforeach; ?>
     </div><!-- .card-grid -->
     <?php endif; ?>
@@ -740,7 +840,11 @@ document.querySelectorAll('.card-wrapper').forEach(wrapper => {
 
 // ─── Card: init card grid module ─────────────────────────────────────────────
 import { initCardGrid, handleCardAction, updateProgressBar } from '/js/modules/card.js';
+import { initTodoList } from '/js/modules/todo.js';
 initCardGrid(WS_ID, <?= $isAdmin ? 'true' : 'false' ?>);
+document.querySelectorAll('[data-todo-card-id]').forEach(panel => {
+    initTodoList(parseInt(panel.dataset.todoCardId, 10));
+});
 
 // Expose handleCardAction globally (used in inline onclick in PHP-rendered HTML)
 window.handleCardAction = handleCardAction;

@@ -8,8 +8,6 @@ use App\Core\Database;
 
 class ProgressCalculator
 {
-    // Completed in PHASE-4 STEP-31. Single atomic query prevents division-by-zero and N+1.
-
     public static function forCard(int $cardId): int
     {
         $db   = Database::getInstance();

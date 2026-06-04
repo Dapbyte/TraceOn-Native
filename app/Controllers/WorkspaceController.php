@@ -10,6 +10,7 @@ use App\Core\Database;
 use App\Models\WorkspaceModel;
 use App\Models\MemberModel;
 use App\Models\CardModel;
+use App\Models\TodoModel;
 use App\Models\LoginAttemptModel;
 use App\Helpers\ActivityLogger;
 use App\Helpers\ProgressCalculator;
@@ -54,6 +55,7 @@ class WorkspaceController extends BaseController
         foreach ($cards as &$card) {
             $cardId             = (int)$card['id'];
             $card['progress']   = ProgressCalculator::forCard($cardId);
+            $card['todos']      = TodoModel::listForCard($cardId);
             $card['access_users'] = CardModel::accessUserIds($cardId);
             $card['user_has_access'] = (
                 in_array($membership['role'], ['Owner', 'Admin'], true)

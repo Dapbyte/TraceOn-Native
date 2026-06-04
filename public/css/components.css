@@ -333,6 +333,175 @@
     margin-top: var(--space-6);
 }
 
+/* Todo detail */
+.card-detail-modal {
+    width: min(760px, calc(100vw - var(--space-8)));
+}
+
+.card-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+}
+
+.card-detail-heading {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.card-detail-title {
+    font-family: var(--font-heading);
+    font-size: var(--text-h2);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.card-detail-progress {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+}
+
+.todo-filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.todo-filter {
+    min-height: 36px;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-background);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    font-weight: 600;
+}
+
+.todo-filter.active,
+.todo-filter:hover {
+    border-color: var(--color-secondary);
+    color: var(--color-secondary);
+    background: var(--color-primary-5);
+}
+
+.todo-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.todo-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 52px;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-background);
+    transition: opacity 0.25s ease, background-color var(--transition-base);
+}
+
+.todo-row.is-delete-pending {
+    background: rgba(198, 40, 40, 0.06);
+}
+
+.todo-row.is-removing {
+    opacity: 0;
+}
+
+.todo-checkbox {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--color-input-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-background);
+    color: #FFFFFF;
+    padding: 0;
+    cursor: pointer;
+}
+
+.todo-checkbox.is-checked {
+    background: var(--color-success);
+    border-color: var(--color-success);
+}
+
+.todo-checkmark {
+    width: 13px;
+    height: 13px;
+    transform: scale(0.1);
+    transition: transform 150ms ease-out;
+}
+
+.todo-checkbox.is-checked .todo-checkmark {
+    transform: scale(1);
+}
+
+.todo-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.todo-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: text-decoration 0.2s, opacity 0.25s ease-out;
+}
+
+.todo-row.is-done .todo-title {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.todo-status-select {
+    width: 136px;
+    flex: 0 0 136px;
+    height: 36px;
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+}
+
+.todo-actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.todo-create-form {
+    display: flex;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+}
+
+.todo-empty {
+    color: var(--text-muted);
+    padding: var(--space-6);
+    text-align: center;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-md);
+}
+
 /* Mobile: full-screen modal */
 @media (max-width: 639px) {
     .modal-backdrop {
@@ -348,6 +517,24 @@
         height: 100vh;
         max-height: 100vh;
         border-radius: 0;
+    }
+    .card-detail-modal {
+        width: 100vw;
+    }
+    .todo-row {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+    .todo-content {
+        flex-basis: calc(100% - 34px);
+    }
+    .todo-status-select {
+        width: calc(100% - 58px);
+        flex-basis: calc(100% - 58px);
+        margin-left: 30px;
+    }
+    .todo-create-form {
+        flex-direction: column;
     }
 }
 

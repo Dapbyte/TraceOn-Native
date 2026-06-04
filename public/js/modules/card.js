@@ -12,6 +12,13 @@ export function initCardGrid(workspaceId, isAdmin) {
     _workspaceId = workspaceId;
     _isAdmin     = isAdmin;
 
+    document.querySelectorAll('.card[data-card-id]').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('button, a, input, select, textarea, .card-dropdown')) return;
+            openCardDetail(parseInt(card.dataset.cardId, 10));
+        });
+    });
+
     // Ellipsis menu wiring
     document.querySelectorAll('.card-ellipsis-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -39,17 +46,10 @@ export function initCardGrid(workspaceId, isAdmin) {
 }
 
 export function updateProgressBar(cardId, progress) {
-    const fill = document.querySelector(`.progress-bar-fill[data-card-id="${cardId}"]`);
-    if (!fill) return;
-    fill.style.width = progress + '%';
-    fill.classList.toggle('progress-complete', progress === 100);
-
-    // Update ratio text
-    const ratioEl = document.querySelector(`.progress-ratio[data-card-id="${cardId}"]`);
-    if (ratioEl) {
-        // Will be updated by todo.js with exact counts
-        ratioEl.textContent = progress + '%';
-    }
+    document.querySelectorAll(`.progress-bar-fill[data-card-id="${cardId}"]`).forEach(fill => {
+        fill.style.width = progress + '%';
+        fill.classList.toggle('progress-complete', progress === 100);
+    });
 }
 
 // ─── Dropdown (desktop) ────────────────────────────────────────────────────────
@@ -163,6 +163,8 @@ function openCardDetail(cardId) {
     const panel = document.getElementById(`card-detail-${cardId}`);
     if (panel) {
         panel.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        panel.querySelector('[data-card-detail-close]')?.focus();
         history.pushState(null, '', `/workspace/${_workspaceId}/card/${cardId}`);
     }
 }

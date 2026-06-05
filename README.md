@@ -81,13 +81,10 @@ BCRYPT_COST=12
 Import file SQL / schema ke MySQL dari folder `migrations`, lalu pastikan tabel inti tersedia:
 `users`, `workspaces`, `workspace_members`, `cards`, `card_access`, `todos`, `activities`, `login_attempts`.
 
-### 5) Jalankan aplikasi
-Akses aplikasi melalui web server yang mengarah ke folder `public/`.
-
-Contoh:
-
+### 5) Jalankan web
+pada root folder:
 ```text
-http://localhost/traceon/public
+php -S localhost:8000 -t public
 ```
 
 atau sesuai konfigurasi server yang kamu pakai.

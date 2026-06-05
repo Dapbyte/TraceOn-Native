@@ -7,6 +7,18 @@
 
 TraceOn adalah sistem monitoring progress tugas / project berbasis **workspace** dan **card access**. Aplikasi ini dirancang untuk mahasiswa, baik untuk penggunaan personal maupun kerja tim, agar pembagian tugas, kontrol akses, dan progres pekerjaan bisa dipantau dengan lebih rapi, aman, dan terstruktur.
 
+## 👨‍💻 Developer
+
+### 1. M. Daffa Arrafi
+**NPM:** 24081010035
+
+### 2. Valentio Titolius Dwi Jaya
+**NPM:** 24081010169
+
+### 3. Ahmad Naufal Fijra Darmansyah
+**NPM:** 24081010350
+
+
 ## ✨ Gambaran Singkat
 
 TraceOn membantu kamu untuk:
@@ -17,7 +29,6 @@ TraceOn membantu kamu untuk:
 - memantau progress setiap card dan workspace,
 - melihat aktivitas penting secara terpusat melalui activity log.
 
-Sistem ini menggunakan arsitektur **PHP 8.3 Native MVC**, **MySQL 8+**, dan **Vanilla JavaScript**, tanpa framework besar.
 
 ## 🚀 Fitur Utama
 
@@ -38,22 +49,6 @@ Sistem ini menggunakan arsitektur **PHP 8.3 Native MVC**, **MySQL 8+**, dan **Va
 - **Styling**: CSS Custom Properties
 - **Auth & Security**: Session, CSRF, PDO Prepared Statement, bcrypt
 
-## 📦 Struktur Singkat Project
-
-```text
-traceon/
-├── app/
-├── config/
-├── public/
-│   ├── css/
-│   ├── js/
-│   ├── uploads/
-│   └── index.php
-├── routes/
-├── storage/
-├── vendor/
-└── composer.json
-```
 
 ## 🔧 Cara Menjalankan Project
 
@@ -83,7 +78,7 @@ BCRYPT_COST=12
 ```
 
 ### 4) Import database
-Import file SQL / schema ke MySQL, lalu pastikan tabel inti tersedia:
+Import file SQL / schema ke MySQL dari folder `migrations`, lalu pastikan tabel inti tersedia:
 `users`, `workspaces`, `workspace_members`, `cards`, `card_access`, `todos`, `activities`, `login_attempts`.
 
 ### 5) Jalankan aplikasi
@@ -138,33 +133,13 @@ TraceOn dirancang dengan beberapa perlindungan penting:
 - bcrypt untuk hashing password
 - file upload avatar dibatasi dan divalidasi
 
-## 📱 Responsif
-
-TraceOn dibuat agar nyaman digunakan di berbagai ukuran layar:
-
-- sidebar berubah menjadi mode mobile di layar kecil,
-- card grid menyesuaikan jumlah kolom,
-- modal dan todo list menyesuaikan ukuran layar,
-- tombol dan komponen tetap mudah disentuh di perangkat mobile.
-
-## 👨‍💻 Developer
-
-### 1. M. Daffa Arrafi
-**NPM:** 24081010035
-
-### 2. Valentio Titolius Dwi Jaya
-**NPM:** 24081010169
-
-### 3. Ahmad Naufal Fijra Darmansyah
-**NPM:** 24081010350
-
 ## 📄 Tentang Proyek
 
 TraceOn adalah sistem monitoring progress tugas / project berbasis workspace dan card access. Sistem ini mendukung kolaborasi mahasiswa untuk kebutuhan personal maupun tim, dengan fokus pada pembagian tugas, transparansi progres, dan kontrol akses yang lebih rapi. Konsep ini selaras dengan spesifikasi produk TraceOn yang menekankan workspace, role system, todo management, activity log, dan responsive UI. fileciteturn3file0L49-L57 fileciteturn3file0L59-L67
 
 ## 📌 Lisensi
 
-Project ini dibuat untuk keperluan pembelajaran dan pengembangan akademik.
+Project ini dibuat untuk penyelesaian UAS mata kuliah Pemrograman Website.
 
 ---
 

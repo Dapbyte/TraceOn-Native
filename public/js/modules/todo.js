@@ -1,12 +1,6 @@
 import { apiPost } from './api.js';
 import { showToast } from './toast.js';
-import { updateProgressBar } from './card.js';
-
-const STATUS_LABELS = {
-    pending: 'Belum',
-    in_progress: 'Sedang',
-    done: 'Selesai',
-};
+import { updateProgressBar, updateWorkspaceProgress } from './card.js';
 
 export function initTodoList(cardId) {
     const panel = document.querySelector(`[data-todo-card-id="${cardId}"]`);
@@ -39,17 +33,46 @@ export function initTodoList(cardId) {
 
     panel.addEventListener('change', (e) => {
         const select = e.target.closest('[data-todo-status]');
-        if (!select) return;
-        updateTodoStatus(select.closest('.todo-row'), select.value, select);
+        if (select) {
+            updateTodoStatus(select.closest('.todo-row'), select.value, select);
+            return;
+        }
+
+        const prioritySelect = e.target.closest('[data-todo-priority]');
+        if (prioritySelect) {
+            updateTodoPriority(prioritySelect.closest('.todo-row'), prioritySelect.value, prioritySelect);
+            return;
+        }
     });
 
-    panel.querySelectorAll('[data-todo-filter]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            panel.querySelectorAll('[data-todo-filter]').forEach(item => item.classList.remove('active'));
-            btn.classList.add('active');
-            applyFilter(panel);
-        });
+    // Inline title edit — save on blur or Enter
+    panel.addEventListener('blur', (e) => {
+        const input = e.target.closest('[data-todo-edit-title]');
+        if (!input) return;
+        const row = input.closest('.todo-row');
+        if (!row) return;
+        const todoId = parseInt(row.dataset.todoId, 10);
+        const newTitle = input.value.trim();
+        if (!newTitle || newTitle === input.defaultValue) return;
+        saveTodoTitle(todoId, newTitle, input);
+    }, true);
+
+    panel.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        const input = e.target.closest('[data-todo-edit-title]');
+        if (!input) return;
+        input.blur();
     });
+
+    // Filter dropdowns
+    const statusFilter = panel.querySelector('[data-todo-status-filter]');
+    const priorityFilter = panel.querySelector('[data-todo-priority-filter]');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', () => applyFilters(panel));
+    }
+    if (priorityFilter) {
+        priorityFilter.addEventListener('change', () => applyFilters(panel));
+    }
 
     panel.querySelector('[data-todo-form]')?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -63,6 +86,43 @@ export function initTodoList(cardId) {
         e.stopImmediatePropagation();
         closePanel(panel);
     }, true);
+}
+
+async function saveTodoTitle(todoId, newTitle, input) {
+    try {
+        await apiPost('/api/todo/update', {
+            todo_id: todoId,
+            title: newTitle,
+            _method: 'PATCH',
+        });
+        input.defaultValue = newTitle;
+        showToast('Judul todo diperbarui', 'success');
+    } catch (err) {
+        input.value = input.defaultValue;
+        showToast(err.message, 'error');
+    }
+}
+
+async function updateTodoPriority(row, priority, select) {
+    if (!row || !['low', 'medium', 'high'].includes(priority)) return;
+    const todoId = parseInt(row.dataset.todoId, 10);
+    if (!todoId) return;
+
+    select.disabled = true;
+    try {
+        await apiPost('/api/todo/update', {
+            todo_id: todoId,
+            priority,
+            _method: 'PATCH',
+        });
+        row.dataset.priority = priority;
+        showToast('Prioritas diperbarui', 'success');
+    } catch (err) {
+        select.value = row.dataset.priority || 'medium';
+        showToast(err.message, 'error');
+    } finally {
+        select.disabled = false;
+    }
 }
 
 export function handleTodoDeleteClick(todoEl, todoId) {
@@ -106,6 +166,7 @@ export function handleTodoDeleteClick(todoEl, todoId) {
             const cardId = parseInt(todoEl.closest('[data-todo-card-id]')?.dataset.todoCardId, 10);
             const res = await apiPost('/api/todo/delete', { todo_id: todoId, _method: 'DELETE' });
             updateProgressBar(cardId, res.data.progress_card);
+            updateWorkspaceProgress();
             todoEl.classList.add('is-removing');
             todoEl.addEventListener('transitionend', () => {
                 todoEl.remove();
@@ -144,11 +205,12 @@ async function createTodo(panel, cardId) {
     try {
         const res = await apiPost('/api/todo/create', { card_id: cardId, title });
         panel.querySelector('[data-todo-empty]')?.remove();
-        panel.querySelector('[data-todo-list]')?.appendChild(createTodoRow(res.data.todo_id, title, 'pending'));
+        panel.querySelector('[data-todo-list]')?.appendChild(createTodoRow(res.data.todo_id, title, 'pending', 'medium'));
         input.value = '';
         updateProgressBar(cardId, res.data.progress_card);
+        updateWorkspaceProgress();
         syncCardRatio(cardId);
-        applyFilter(panel);
+        applyFilters(panel);
         showToast('Todo ditambahkan', 'success');
     } catch (err) {
         showToast(err.message, 'error');
@@ -175,8 +237,9 @@ async function updateTodoStatus(row, status, select = null) {
         setRowStatus(row, status);
         const cardId = parseInt(row.closest('[data-todo-card-id]')?.dataset.todoCardId, 10);
         updateProgressBar(cardId, res.data.progress_card);
+        updateWorkspaceProgress();
         syncCardRatio(cardId);
-        applyFilter(row.closest('[data-todo-card-id]'));
+        applyFilters(row.closest('[data-todo-card-id]'));
     } catch (err) {
         if (select) select.value = previous;
         showToast(err.message, 'error');
@@ -186,23 +249,30 @@ async function updateTodoStatus(row, status, select = null) {
     }
 }
 
-function createTodoRow(todoId, title, status) {
+function createTodoRow(todoId, title, status, priority) {
+    priority = priority || 'medium';
     const row = document.createElement('div');
     row.className = 'todo-row';
     row.dataset.todoId = String(todoId);
     row.dataset.status = status;
+    row.dataset.priority = priority;
 
     row.innerHTML = `
         <button type="button" class="todo-checkbox" data-todo-toggle aria-label="Ubah status todo">
             <span class="iconify todo-checkmark" data-icon="ph:check-bold"></span>
         </button>
         <div class="todo-content">
-            <p class="todo-title"></p>
+            <input type="text" class="todo-title-input" value="${escapeAttr(title)}" data-todo-edit-title maxlength="255">
         </div>
         <select class="form-control todo-status-select" data-todo-status aria-label="Status todo">
             <option value="pending">Belum</option>
             <option value="in_progress">Sedang</option>
             <option value="done">Selesai</option>
+        </select>
+        <select class="form-control todo-priority-select" data-todo-priority aria-label="Prioritas todo">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
         </select>
         <div class="todo-actions">
             <button type="button" class="btn btn-icon btn-outline todo-delete-btn" data-todo-delete aria-label="Hapus todo">
@@ -210,7 +280,6 @@ function createTodoRow(todoId, title, status) {
             </button>
         </div>
     `;
-    row.querySelector('.todo-title').textContent = title;
     setRowStatus(row, status);
     return row;
 }
@@ -223,21 +292,53 @@ function setRowStatus(row, status) {
     const select = row.querySelector('[data-todo-status]');
     if (select) select.value = status;
 
-    row.querySelector('.todo-status-badge')?.remove();
-    if (status === 'in_progress') {
-        const badge = document.createElement('span');
-        badge.className = 'badge badge-warning todo-status-badge';
-        badge.textContent = STATUS_LABELS.in_progress;
-        row.querySelector('.todo-content')?.appendChild(badge);
+    // Also init the priority select
+    const prioritySelect = row.querySelector('[data-todo-priority]');
+    if (prioritySelect && row.dataset.priority) {
+        prioritySelect.value = row.dataset.priority;
     }
 }
 
-function applyFilter(panel) {
+function applyFilters(panel) {
     if (!panel) return;
-    const active = panel.querySelector('[data-todo-filter].active')?.dataset.todoFilter ?? 'all';
+    const statusFilter = panel.querySelector('[data-todo-status-filter]');
+    const priorityFilter = panel.querySelector('[data-todo-priority-filter]');
+    const statusVal = statusFilter ? statusFilter.value : 'all';
+    const priorityVal = priorityFilter ? priorityFilter.value : 'all';
+    const list = panel.querySelector('[data-todo-list]');
+
+    let visibleCount = 0;
     panel.querySelectorAll('.todo-row').forEach(row => {
-        row.hidden = active !== 'all' && row.dataset.status !== active;
+        const matchStatus = statusVal === 'all' || row.dataset.status === statusVal;
+        const matchPriority = priorityVal === 'all' || row.dataset.priority === priorityVal;
+        const show = matchStatus && matchPriority;
+        row.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
     });
+
+    // Show filter-empty state when filters hide all rows
+    let emptyEl = list.querySelector('[data-todo-filter-empty]');
+    const hasRows = list.querySelectorAll('.todo-row').length > 0;
+    if (hasRows && visibleCount === 0) {
+        if (!emptyEl) {
+            emptyEl = document.createElement('div');
+            emptyEl.className = 'todo-empty';
+            emptyEl.dataset.todoFilterEmpty = '';
+            emptyEl.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+                    <span class="iconify" data-icon="ph:funnel-bold" style="width: 32px; height: 32px; color: var(--color-border);"></span>
+                    <div>
+                        <p style="margin: 0; font-weight: 500; color: var(--text-primary);">Tidak ada todo yang sesuai filter</p>
+                        <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-muted);">Sesuaikan filter atau buat todo baru.</p>
+                    </div>
+                </div>
+            `;
+            list.appendChild(emptyEl);
+        }
+        emptyEl.style.display = '';
+    } else if (emptyEl) {
+        emptyEl.style.display = 'none';
+    }
 }
 
 function syncCardRatio(cardId) {
@@ -253,18 +354,29 @@ function syncCardRatio(cardId) {
 function syncEmptyState(cardId) {
     const panel = document.querySelector(`[data-todo-card-id="${cardId}"]`);
     const list = panel?.querySelector('[data-todo-list]');
-    if (!panel || !list || list.querySelector('.todo-row')) return;
+    if (!panel || !list) return;
 
-    const empty = document.createElement('p');
-    empty.className = 'todo-empty';
-    empty.dataset.todoEmpty = '';
-    empty.textContent = 'Belum ada todo di card ini';
-    list.appendChild(empty);
+    // Remove existing empty states
+    list.querySelectorAll('[data-todo-empty]').forEach(e => e.remove());
+    list.querySelectorAll('[data-todo-filter-empty]').forEach(e => e.remove());
+
+    if (!list.querySelector('.todo-row')) {
+        const empty = document.createElement('p');
+        empty.className = 'todo-empty';
+        empty.dataset.todoEmpty = '';
+        empty.textContent = 'Belum ada todo';
+        list.appendChild(empty);
+    }
 }
 
 function closePanel(panel) {
     panel.style.display = 'none';
     document.body.style.overflow = '';
-    const url = panel.dataset.workspaceUrl;
-    if (url) history.pushState(null, '', url);
+    if (window.location.hash.startsWith('#card=')) {
+        history.pushState(null, '', window.location.pathname + window.location.search);
+    }
+}
+
+function escapeAttr(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

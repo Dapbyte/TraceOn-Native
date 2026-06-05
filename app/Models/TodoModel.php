@@ -9,6 +9,7 @@ use App\Core\Database;
 class TodoModel
 {
     private const VALID_STATUSES = ['pending', 'in_progress', 'done'];
+    private const VALID_PRIORITIES = ['low', 'medium', 'high'];
 
     public static function findById(int $id): ?array
     {
@@ -53,6 +54,21 @@ class TodoModel
         $db   = Database::getInstance();
         $stmt = $db->prepare('UPDATE todos SET status = ?, updated_at = NOW() WHERE id = ?');
         $stmt->execute([$status, $id]);
+    }
+
+    public static function updatePriority(int $id, string $priority): void
+    {
+        if (!in_array($priority, self::VALID_PRIORITIES, true)) {
+            throw new \InvalidArgumentException('Invalid todo priority: ' . $priority);
+        }
+        $db   = Database::getInstance();
+        $stmt = $db->prepare('UPDATE todos SET priority = ?, updated_at = NOW() WHERE id = ?');
+        $stmt->execute([$priority, $id]);
+    }
+
+    public static function isValidPriority(string $priority): bool
+    {
+        return in_array($priority, self::VALID_PRIORITIES, true);
     }
 
     // Hard delete — no soft delete, no deleted_at (INV-12, RULE-18)

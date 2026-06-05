@@ -56,20 +56,20 @@ if ($deadline) {
 <!-- ─── Tab: Dashboard (card grid) ────────────────────────────────────────── -->
 <div id="tab-dashboard" class="tab-content page-content">
 
-    <?php if ($isAdmin): ?>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);flex-wrap:wrap;gap:12px;">
-        <div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
             <span style="font-size:var(--text-sm);color:var(--text-muted);">
                 Progress workspace:
-                <strong style="color:var(--color-secondary);"><?= $wsProgress ?? 0 ?>%</strong>
+                <strong style="color:var(--color-secondary);" id="ws-progress-value"><?= $wsProgress ?? 0 ?>%</strong>
             </span>
         </div>
+        <?php if ($isAdmin): ?>
         <button type="button" class="btn btn-primary" id="btn-new-card">
             <span class="iconify" data-icon="ph:plus-bold" style="width:16px;height:16px"></span>
             Tambah Card
         </button>
+        <?php endif; ?>
     </div>
-    <?php endif; ?>
 
     <?php if (empty($cards)): ?>
     <div class="empty-state" style="min-height:40vh;">
@@ -136,18 +136,24 @@ if ($deadline) {
                     <div class="card-dropdown"
                          style="display:none;position:absolute;top:44px;right:8px;background:var(--color-background);border:1px solid var(--color-border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);min-width:160px;z-index:50;overflow:hidden;">
                         <button type="button"
-                                onclick="handleCardAction('edit', <?= $cId ?>, '<?= addslashes($c['title']) ?>')"
+                                data-card-menu="edit"
+                                data-card-id="<?= $cId ?>"
+                                data-card-title="<?= $cTitle ?>"
                                 style="width:100%;padding:10px 16px;text-align:left;background:none;border:none;cursor:pointer;font-size:var(--text-sm);display:flex;align-items:center;gap:8px;">
                             <span class="iconify" data-icon="ph:pencil-bold" style="width:14px;height:14px"></span>Edit Card
                         </button>
                         <button type="button"
-                                onclick="handleCardAction('access', <?= $cId ?>, '<?= addslashes($c['title']) ?>')"
+                                data-card-menu="access"
+                                data-card-id="<?= $cId ?>"
+                                data-card-title="<?= $cTitle ?>"
                                 style="width:100%;padding:10px 16px;text-align:left;background:none;border:none;cursor:pointer;font-size:var(--text-sm);display:flex;align-items:center;gap:8px;">
                             <span class="iconify" data-icon="ph:users-bold" style="width:14px;height:14px"></span>Kelola Akses
                         </button>
                         <hr style="margin:0;border-color:var(--color-border);">
                         <button type="button"
-                                onclick="handleCardAction('delete', <?= $cId ?>, '<?= addslashes($c['title']) ?>')"
+                                data-card-menu="delete"
+                                data-card-id="<?= $cId ?>"
+                                data-card-title="<?= $cTitle ?>"
                                 style="width:100%;padding:10px 16px;text-align:left;background:none;border:none;cursor:pointer;font-size:var(--text-sm);color:var(--color-error);display:flex;align-items:center;gap:8px;">
                             <span class="iconify" data-icon="ph:trash-bold" style="width:14px;height:14px"></span>Hapus Card
                         </button>
@@ -209,95 +215,117 @@ if ($deadline) {
          role="dialog"
          aria-modal="true"
          aria-labelledby="card-detail-title-<?= $cId ?>">
-        <div class="modal modal-fullscreen card-detail-modal">
-            <div class="card-detail-header">
-                <div class="card-detail-heading">
-                    <h2 class="card-detail-title" id="card-detail-title-<?= $cId ?>"><?= $cTitle ?></h2>
-                    <?php if (!$cHasAccess): ?>
-                    <span class="badge badge-readonly">Hanya Baca</span>
-                    <?php endif; ?>
-                </div>
-                <button type="button" class="btn btn-icon btn-outline card-detail-close" data-card-detail-close aria-label="Tutup detail card">
-                    <span class="iconify" data-icon="ph:x-bold" style="width:18px;height:18px"></span>
-                </button>
-            </div>
+            <div class="modal modal-fullscreen card-detail-modal">
+	            <div class="card-detail-header">
+	                <div class="card-detail-heading">
+	                    <h2 class="card-detail-title" id="card-detail-title-<?= $cId ?>"><?= $cTitle ?></h2>
+	                    <?php if (!$cHasAccess): ?>
+	                    <span class="badge badge-readonly">Hanya Baca</span>
+	                    <?php endif; ?>
+	                </div>
+	                <button type="button" class="btn btn-icon btn-outline card-detail-close" data-card-detail-close aria-label="Tutup detail card">
+	                    <span class="iconify" data-icon="ph:x-bold" style="width:18px;height:18px"></span>
+	                </button>
+	            </div>
 
-            <div class="card-detail-progress">
-                <div class="progress-track">
-                    <div class="progress-bar-fill <?= $cProgress >= 100 ? 'progress-complete' : '' ?>"
-                         data-card-id="<?= $cId ?>"
-                         style="width:<?= $cProgress ?>%;"></div>
-                </div>
-                <p class="progress-ratio text-sm text-muted" data-card-id="<?= $cId ?>">
-                    <?= $cDone ?>/<?= $cTotal ?> selesai
-                </p>
-            </div>
+	            <div class="card-detail-body">
+	            <div class="card-detail-progress">
+	                <div class="progress-track">
+	                    <div class="progress-bar-fill <?= $cProgress >= 100 ? 'progress-complete' : '' ?>"
+	                         data-card-id="<?= $cId ?>"
+	                         style="width:<?= $cProgress ?>%;"></div>
+	                </div>
+	                <p class="progress-ratio text-sm text-muted" data-card-id="<?= $cId ?>">
+	                    <?= $cDone ?>/<?= $cTotal ?> selesai
+	                </p>
+	            </div>
 
-            <div class="todo-filter-group" role="group" aria-label="Filter todo">
-                <button type="button" class="todo-filter active" data-todo-filter="all">Semua</button>
-                <button type="button" class="todo-filter" data-todo-filter="done">Selesai</button>
-                <button type="button" class="todo-filter" data-todo-filter="in_progress">Dalam Proses</button>
-                <button type="button" class="todo-filter" data-todo-filter="pending">Belum</button>
-            </div>
+	            <div class="todo-filter-group" role="group" aria-label="Filter todo">
+	                <select class="form-control" id="todo-status-filter-<?= $cId ?>" data-todo-status-filter>
+	                    <option value="all">Semua Status</option>
+	                    <option value="pending">Belum</option>
+	                    <option value="in_progress">Proses</option>
+	                    <option value="done">Selesai</option>
+	                </select>
+	                <select class="form-control" id="todo-priority-filter-<?= $cId ?>" data-todo-priority-filter>
+	                    <option value="all">Semua Prioritas</option>
+	                    <option value="high">High</option>
+	                    <option value="medium">Medium</option>
+	                    <option value="low">Low</option>
+	                </select>
+	            </div>
 
-            <div class="todo-list" data-todo-list>
-                <?php if (empty($c['todos'])): ?>
-                <p class="todo-empty" data-todo-empty>Belum ada todo di card ini</p>
-                <?php else: ?>
-                <?php foreach ($c['todos'] as $todo):
-                    $todoId = (int)$todo['id'];
-                    $todoTitle = htmlspecialchars($todo['title'], ENT_QUOTES, 'UTF-8');
-                    $todoStatus = $todo['status'];
-                    $todoDone = $todoStatus === 'done';
-                    $todoInProgress = $todoStatus === 'in_progress';
-                    $todoLabel = $todoStatus === 'done' ? 'Selesai' : ($todoInProgress ? 'Sedang' : 'Belum');
-                ?>
-                <div class="todo-row <?= $todoDone ? 'is-done' : '' ?>" data-todo-id="<?= $todoId ?>" data-status="<?= htmlspecialchars($todoStatus, ENT_QUOTES, 'UTF-8') ?>">
-                    <?php if ($cHasAccess): ?>
-                    <button type="button" class="todo-checkbox <?= $todoDone ? 'is-checked' : '' ?>" data-todo-toggle aria-label="Ubah status todo">
-                        <span class="iconify todo-checkmark" data-icon="ph:check-bold"></span>
-                    </button>
-                    <?php else: ?>
-                    <span class="todo-checkbox <?= $todoDone ? 'is-checked' : '' ?>" aria-hidden="true">
-                        <span class="iconify todo-checkmark" data-icon="ph:check-bold"></span>
-                    </span>
-                    <?php endif; ?>
+	            <div class="todo-list" data-todo-list>
+	                <?php if (empty($c['todos'])): ?>
+	                <p class="todo-empty" data-todo-empty>Belum ada todo</p>
+	                <?php else: ?>
+	                <?php foreach ($c['todos'] as $todo):
+	                    $todoId = (int)$todo['id'];
+	                    $todoTitle = htmlspecialchars($todo['title'], ENT_QUOTES, 'UTF-8');
+	                    $todoStatus = $todo['status'];
+	                    $todoPriority = $todo['priority'] ?? 'medium';
+	                    $todoDone = $todoStatus === 'done';
+	                    $todoInProgress = $todoStatus === 'in_progress';
+	                    $todoLabel = $todoStatus === 'done' ? 'Selesai' : ($todoInProgress ? 'Proses' : 'Belum');
+	                ?>
+	                <div class="todo-row <?= $todoDone ? 'is-done' : '' ?>" data-todo-id="<?= $todoId ?>" data-status="<?= htmlspecialchars($todoStatus, ENT_QUOTES, 'UTF-8') ?>" data-priority="<?= $todoPriority ?>">
+	                    <?php if ($cHasAccess): ?>
+	                    <button type="button" class="todo-checkbox <?= $todoDone ? 'is-checked' : '' ?>" data-todo-toggle aria-label="Ubah status todo">
+	                        <span class="iconify todo-checkmark" data-icon="ph:check-bold"></span>
+	                    </button>
+	                    <?php else: ?>
+	                    <span class="todo-checkbox <?= $todoDone ? 'is-checked' : '' ?>" aria-hidden="true">
+	                        <span class="iconify todo-checkmark" data-icon="ph:check-bold"></span>
+	                    </span>
+	                    <?php endif; ?>
 
-                    <div class="todo-content">
-                        <p class="todo-title"><?= $todoTitle ?></p>
-                        <?php if ($todoInProgress): ?>
-                        <span class="badge badge-warning todo-status-badge">Sedang</span>
-                        <?php endif; ?>
-                    </div>
+	                    <div class="todo-content">
+	                        <?php if ($cHasAccess): ?>
+	                        <input type="text" class="todo-title-input" value="<?= $todoTitle ?>" data-todo-edit-title maxlength="255">
+	                        <?php else: ?>
+	                        <p class="todo-title"><?= $todoTitle ?></p>
+	                        <?php endif; ?>
 
-                    <?php if ($cHasAccess): ?>
-                    <select class="form-control todo-status-select" data-todo-status aria-label="Status todo">
-                        <option value="pending" <?= $todoStatus === 'pending' ? 'selected' : '' ?>>Belum</option>
-                        <option value="in_progress" <?= $todoStatus === 'in_progress' ? 'selected' : '' ?>>Sedang</option>
-                        <option value="done" <?= $todoStatus === 'done' ? 'selected' : '' ?>>Selesai</option>
-                    </select>
-                    <div class="todo-actions">
-                        <button type="button" class="btn btn-icon btn-outline todo-delete-btn" data-todo-delete aria-label="Hapus todo">
-                            <span class="iconify" data-icon="ph:trash-bold" style="width:16px;height:16px"></span>
-                        </button>
-                    </div>
-                    <?php else: ?>
-                    <span class="badge <?= $todoDone ? 'badge-success' : ($todoInProgress ? 'badge-warning' : 'badge-neutral') ?>">
-                        <?= $todoLabel ?>
-                    </span>
-                    <?php endif; ?>
-                </div>
-                <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
 
-            <?php if ($cHasAccess): ?>
-            <form class="todo-create-form" data-todo-form>
-                <input type="text" class="form-control" data-todo-title maxlength="255" placeholder="Tambah todo baru" required>
-                <button type="submit" class="btn btn-primary" data-todo-submit>Simpan</button>
-            </form>
-            <?php endif; ?>
-        </div>
+
+	                    </div>
+
+	                    <?php if ($cHasAccess): ?>
+	                    <select class="form-control todo-status-select" data-todo-status aria-label="Status todo">
+	                        <option value="pending" <?= $todoStatus === 'pending' ? 'selected' : '' ?>>Belum</option>
+	                        <option value="in_progress" <?= $todoStatus === 'in_progress' ? 'selected' : '' ?>>Sedang</option>
+	                        <option value="done" <?= $todoStatus === 'done' ? 'selected' : '' ?>>Selesai</option>
+	                    </select>
+	                    <select class="form-control todo-priority-select" data-todo-priority aria-label="Prioritas todo">
+	                        <option value="low" <?= $todoPriority === 'low' ? 'selected' : '' ?>>Low</option>
+	                        <option value="medium" <?= $todoPriority === 'medium' ? 'selected' : '' ?>>Medium</option>
+	                        <option value="high" <?= $todoPriority === 'high' ? 'selected' : '' ?>>High</option>
+	                    </select>
+	                    <div class="todo-actions">
+	                        <button type="button" class="btn btn-icon btn-outline todo-delete-btn" data-todo-delete aria-label="Hapus todo">
+	                            <span class="iconify" data-icon="ph:trash-bold" style="width:16px;height:16px"></span>
+	                        </button>
+	                    </div>
+	                    <?php else: ?>
+	                    <span class="badge <?= $todoDone ? 'badge-success' : ($todoInProgress ? 'badge-warning' : 'badge-neutral') ?>">
+	                        <?= $todoLabel ?>
+	                    </span>
+	                    <?php endif; ?>
+	                </div>
+	                <?php endforeach; ?>
+	                <?php endif; ?>
+	            </div>
+	            </div>
+
+	            <?php if ($cHasAccess): ?>
+	            <div class="card-detail-footer">
+	            <form class="todo-create-form" data-todo-form>
+	                <input type="text" class="form-control" data-todo-title maxlength="255" placeholder="Tambah todo baru" required>
+	                <button type="submit" class="btn btn-primary" data-todo-submit>Simpan</button>
+	            </form>
+	            </div>
+	            <?php endif; ?>
+	        </div>
     </div>
     <?php endforeach; ?>
     </div><!-- .card-grid -->
@@ -417,6 +445,7 @@ if ($deadline) {
     </div>
 
     <!-- Invite code display (Admin+) -->
+    <?php if ($isAdmin): ?>
     <div class="card" style="margin-top:var(--space-6);">
         <h3 style="font-size:var(--text-h3);margin-bottom:var(--space-4);">Kode Undangan</h3>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -435,14 +464,56 @@ if ($deadline) {
             <?php endif; ?>
         </div>
     </div>
+    <?php endif; ?>
 </div>
 
 <!-- ─── Tab: Log Aktivitas ────────────────────────────────────────────────── -->
 <div id="tab-activity" class="tab-content page-content" style="display:none;">
-    <!-- Fully implemented in PHASE-5 STEP-34 -->
-    <div class="empty-state">
-        <span class="iconify" data-icon="ph:list-bullets-bold" style="width:48px;height:48px;color:var(--color-border)"></span>
-        <p class="empty-state-text">Log aktivitas akan tersedia setelah PHASE-5</p>
+    <div class="card" style="margin-bottom:var(--space-6);">
+
+        <div class="activity-toolbar">
+            <div class="activity-search-wrap">
+                <input type="text" id="activity-search-input" class="form-control" placeholder="Cari aktivitas...">
+                <button type="button" class="activity-search-clear" id="btn-activity-clear-search" aria-label="Hapus Pencarian" style="display:none;">
+                    <span class="iconify" data-icon="ph:x-bold" style="width:14px;height:14px"></span>
+                </button>
+            </div>
+            <div class="activity-actions">
+                <button type="button" class="btn btn-outline btn-sm" id="btn-activity-refresh">
+                    <span class="iconify" data-icon="ph:arrows-clockwise-bold" style="width:16px;height:16px"></span> Refresh
+                </button>
+                <?php if ($isOwner): ?>
+                <button type="button" class="btn btn-danger btn-sm" id="btn-activity-clear-log">
+                    <span class="iconify" data-icon="ph:trash-bold" style="width:16px;height:16px"></span> Hapus Semua Log
+                </button>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div id="activity-list" style="display:flex;flex-direction:column;transition: opacity 0.2s ease;">
+            </div>
+
+        <div class="empty-state" id="activity-empty-state" style="display:none;min-height:200px;padding:32px 16px;">
+            <span class="iconify" data-icon="ph:list-bullets-bold" style="width:48px;height:48px;color:var(--color-border)"></span>
+            <p class="empty-state-text">Belum ada aktivitas di workspace ini</p>
+        </div>
+
+        <div style="text-align:center;margin-top:16px;">
+            <button type="button" class="btn btn-outline btn-sm" id="btn-activity-load-more" style="display:none;">Muat Lebih Banyak</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="modal-clear-log" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-clear-log-title">
+    <div class="modal">
+        <h2 class="modal-title" id="modal-clear-log-title" style="color:var(--color-error);">Hapus Semua Log</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;">
+            Apakah Anda yakin ingin menghapus semua log aktivitas di workspace ini? Tindakan ini tidak dapat dibatalkan.
+        </p>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" id="btn-clear-log-cancel">Batal</button>
+            <button type="button" class="btn btn-danger" id="btn-clear-log-confirm">Hapus Semua</button>
+        </div>
     </div>
 </div>
 
@@ -556,7 +627,7 @@ if ($deadline) {
             </div>
             <div class="form-error" id="error-card-general" style="display:none;margin-bottom:12px;"></div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="document.getElementById('modal-new-card').style.display='none'">Batal</button>
+                <button type="button" class="btn btn-outline" data-modal-close="modal-new-card">Batal</button>
                 <button type="submit" class="btn btn-primary" id="btn-card-submit">Buat Card</button>
             </div>
         </form>
@@ -579,7 +650,7 @@ if ($deadline) {
             </div>
             <div class="form-error" id="error-edit-card" style="display:none;margin-bottom:12px;"></div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="document.getElementById('modal-edit-card').style.display='none'">Batal</button>
+                <button type="button" class="btn btn-outline" data-modal-close="modal-edit-card">Batal</button>
                 <button type="submit" class="btn btn-primary" id="btn-edit-card-submit">Simpan</button>
             </div>
         </form>
@@ -620,14 +691,14 @@ if ($deadline) {
                     <span style="font-size:var(--text-sm);"><?= $mName ?></span>
                 </div>
                 <div style="display:flex;gap:8px;">
-                    <button type="button" class="btn btn-sm btn-primary" onclick="grantAccess(this, <?= $mUserId ?>)">Beri Akses</button>
-                    <button type="button" class="btn btn-sm btn-outline" style="color:var(--color-error);border-color:var(--color-error);" onclick="revokeAccess(this, <?= $mUserId ?>)">Cabut</button>
+                    <button type="button" class="btn btn-sm btn-primary" data-access-action="grant" data-user-id="<?= $mUserId ?>">Beri Akses</button>
+                    <button type="button" class="btn btn-sm btn-outline" style="color:var(--color-error);border-color:var(--color-error);" data-access-action="revoke" data-user-id="<?= $mUserId ?>">Cabut</button>
                 </div>
             </div>
             <?php endforeach; ?>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-primary" onclick="document.getElementById('modal-card-access').style.display='none'">Selesai</button>
+            <button type="button" class="btn btn-primary" data-modal-close="modal-card-access">Selesai</button>
         </div>
     </div>
 </div>
@@ -640,22 +711,12 @@ if ($deadline) {
     <div id="sheet-actions" style="display:flex;flex-direction:column;gap:4px;"></div>
 </div>
 
-<style>
-#card-sheet-backdrop.visible  { display:block; }
-#card-bottom-sheet.open       { transform:translateY(0); }
-.sheet-action {
-    display:flex;align-items:center;gap:12px;padding:14px 12px;
-    border-radius:var(--radius-md);background:none;border:none;cursor:pointer;
-    font-size:var(--text-body);font-weight:500;color:var(--text-primary);
-    transition:background-color 0.2s;
-}
-.sheet-action:hover { background:var(--color-surface); }
-.sheet-action-danger { color:var(--color-error); }
-</style>
+<!-- Styled via components.css -->
 
 <script type="module">
 import { apiPost, apiGet } from '/js/modules/api.js';
 import { showToast }       from '/js/modules/toast.js';
+import { initActivitySearch } from '/js/modules/activity.js';
 
 const WS_ID   = <?= $wsId ?>;
 const WS_NAME = <?= json_encode($workspace['name']) ?>;
@@ -671,19 +732,62 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // ─── Modal helpers ────────────────────────────────────────────────────────────
+const _modalStack = [];
+
+function trapFocus(modal) {
+    const focusable = modal.querySelectorAll('input,button,select,textarea,a[href],[tabindex]:not([tabindex="-1"])');
+    if (!focusable.length) return;
+    const visible = [...focusable].filter(el => !el.disabled && el.offsetParent !== null);
+    if (!visible.length) return;
+    if (modal._trapHandler) modal.removeEventListener('keydown', modal._trapHandler);
+    modal._trapHandler = function (e) {
+        if (e.key !== 'Tab') return;
+        const first = visible[0], last = visible[visible.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    modal.addEventListener('keydown', modal._trapHandler);
+}
+
 function openModal(id) {
     const m = document.getElementById(id);
-    if (m) { m.style.display = 'flex'; const f = m.querySelector('input,button'); f?.focus(); }
+    if (!m) return;
+    m.style.display = 'flex';
+    const f = m.querySelector('input:not([type="hidden"]),button,select,textarea');
+    f?.focus();
+    trapFocus(m);
+    if (!_modalStack.includes(id)) _modalStack.push(id);
 }
 function closeModal(id) {
     const m = document.getElementById(id);
     if (m) m.style.display = 'none';
+    const idx = _modalStack.indexOf(id);
+    if (idx >= 0) _modalStack.splice(idx, 1);
 }
 document.querySelectorAll('.modal-backdrop').forEach(b => {
-    b.addEventListener('click', e => { if (e.target === b) b.style.display = 'none'; });
+    b.addEventListener('click', e => {
+        if (e.target === b) {
+            b.style.display = 'none';
+            const idx = _modalStack.indexOf(b.id);
+            if (idx >= 0) _modalStack.splice(idx, 1);
+        }
+    });
 });
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
+    if (e.key !== 'Escape') return;
+    // Close only topmost visible modal (BUG-07)
+    const openModals = [...document.querySelectorAll('.modal-backdrop')].filter(m => m.style.display !== 'none' && !m.classList.contains('card-detail-backdrop'));
+    const top = openModals[openModals.length - 1];
+    if (top) {
+        top.style.display = 'none';
+        const idx = _modalStack.indexOf(top.id);
+        if (idx >= 0) _modalStack.splice(idx, 1);
+    }
+});
+
+// Generic data-modal-close handler
+document.querySelectorAll('[data-modal-close]').forEach(btn => {
+    btn.addEventListener('click', () => closeModal(btn.dataset.modalClose));
 });
 
 // ─── Invite code show/copy/regen ──────────────────────────────────────────────
@@ -710,17 +814,52 @@ document.getElementById('btn-copy-code')?.addEventListener('click', async () => 
 document.getElementById('btn-regen-code')?.addEventListener('click', () => openModal('modal-regen'));
 document.getElementById('btn-regen-cancel')?.addEventListener('click', () => closeModal('modal-regen'));
 document.getElementById('btn-regen-confirm')?.addEventListener('click', async () => {
-    closeModal('modal-regen');
+    const btn = document.getElementById('btn-regen-confirm');
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = 'Memproses...';
     try {
         const res = await apiPost('/api/workspace/regenerate-code', { workspace_id: WS_ID, _method: 'PATCH' });
         document.getElementById('invite-code-display').value = res.data.new_invite_code;
         codeRevealed = true;
         document.getElementById('btn-copy-code').style.display = 'inline-flex';
+        // Clear pending rows (server rejected all pending)
+        document.querySelectorAll('[data-request-id]').forEach(row => row.remove());
+        closeModal('modal-regen');
         showToast('Kode undangan diperbarui', 'success');
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+    }
 });
 
 // ─── Approve / Reject pending ─────────────────────────────────────────────────
+function updatePendingBadge() {
+    const membersTab = document.querySelector('.tab-btn[data-tab="members"]');
+    const remaining = document.querySelectorAll('[data-request-id]').length;
+    const badge = membersTab?.querySelector('.pending-badge');
+    if (remaining > 0) {
+        if (badge) badge.textContent = remaining;
+        else if (membersTab) {
+            const b = document.createElement('span');
+            b.className = 'badge badge-warning pending-badge';
+            b.style.marginLeft = '6px';
+            b.style.fontSize = '10px';
+            b.textContent = remaining;
+            membersTab.appendChild(b);
+        }
+    } else {
+        if (badge) badge.remove();
+    }
+}
+function updateMemberCount() {
+    const rows = document.querySelectorAll('#tab-members tbody tr');
+    const approved = [...rows].filter(r => r.style.display !== 'none');
+    const countEl = document.querySelector('.tab-btn[data-tab="members"] span');
+    if (countEl) countEl.textContent = `(${approved.length})`;
+}
 document.querySelectorAll('[data-action="approve"],[data-action="reject"]').forEach(btn => {
     btn.addEventListener('click', async () => {
         const requestId = btn.dataset.requestId;
@@ -729,7 +868,31 @@ document.querySelectorAll('[data-action="approve"],[data-action="reject"]').forE
         try {
             await apiPost('/api/workspace/approve-request', { request_id: requestId, action });
             const row = document.querySelector(`[data-request-id="${requestId}"]`);
-            if (row) { row.style.opacity = '0'; setTimeout(() => row.remove(), 300); }
+            if (row) {
+                if (action === 'reject') {
+                    row.style.opacity = '0';
+                    setTimeout(() => row.remove(), 300);
+                    setTimeout(() => {
+                        const pendingContainer = document.querySelector('[data-request-id]');
+                        if (!pendingContainer) {
+                            const pendingSection = document.querySelector('.card[style*="border-color:rgba(180,83,9,0.3)"]');
+                            if (pendingSection) pendingSection.style.display = 'none';
+                        }
+                    }, 400);
+                } else {
+                    const badge = row.querySelector('.badge');
+                    if (badge) {
+                        badge.className = 'badge badge-success';
+                        badge.textContent = 'Approved';
+                    }
+                    const actionBtns = row.querySelectorAll('button');
+                    actionBtns.forEach(b => b.remove());
+                    row.style.backgroundColor = 'rgba(46,125,50,0.05)';
+                    setTimeout(() => row.remove(), 800);
+                }
+            }
+            updateMemberCount();
+            updatePendingBadge();
             showToast(action === 'approve' ? 'Permohonan disetujui' : 'Permohonan ditolak', 'success');
         } catch (err) { btn.disabled = false; showToast(err.message, 'error'); }
     });
@@ -769,7 +932,10 @@ document.querySelectorAll('[data-action="kick"]').forEach(btn => {
 document.getElementById('btn-kick-cancel')?.addEventListener('click', () => closeModal('modal-kick'));
 document.getElementById('btn-kick-confirm')?.addEventListener('click', async () => {
     if (!kickTarget) return;
-    closeModal('modal-kick');
+    const btn = document.getElementById('btn-kick-confirm');
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = 'Memproses...';
     try {
         await apiPost('/api/member/kick', {
             workspace_id: WS_ID,
@@ -778,21 +944,35 @@ document.getElementById('btn-kick-confirm')?.addEventListener('click', async () 
         });
         const row = document.querySelector(`tr[data-user-id="${kickTarget.userId}"]`);
         if (row) { row.style.opacity = '0'; setTimeout(() => row.remove(), 300); }
+        closeModal('modal-kick');
         showToast(kickTarget.name + ' dikeluarkan dari workspace', 'success');
         kickTarget = null;
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+    }
 });
 
 // ─── Rename ───────────────────────────────────────────────────────────────────
 document.getElementById('form-rename')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('rename-input').value.trim();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
     try {
         await apiPost('/api/workspace/rename', { workspace_id: WS_ID, name, _method: 'PATCH' });
         showToast('Nama workspace diperbarui', 'success');
         document.title = name + ' — TraceOn';
         document.querySelector('.breadcrumb-current').textContent = name;
+        // Sync sidebar entry (BUG-16)
+        const sidebarLabel = document.querySelector(`a.sidebar-workspace-item[href="/workspace/${WS_ID}"] .sidebar-label`);
+        if (sidebarLabel) sidebarLabel.textContent = name;
+        const sidebarItem = document.querySelector(`a.sidebar-workspace-item[href="/workspace/${WS_ID}"]`);
+        if (sidebarItem) sidebarItem.title = name;
     } catch (err) { showToast(err.message, 'error'); }
+    finally { if (submitBtn) submitBtn.disabled = false; }
 });
 
 // ─── Deadline ─────────────────────────────────────────────────────────────────
@@ -818,8 +998,11 @@ document.getElementById('delete-confirm-input')?.addEventListener('input', (e) =
 });
 
 document.getElementById('btn-delete-confirm')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-delete-confirm');
     const nameConfirm = document.getElementById('delete-confirm-input').value;
-    closeModal('modal-delete-ws');
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = 'Menghapus...';
     try {
         const res = await apiPost('/api/workspace/delete', {
             workspace_id: WS_ID,
@@ -827,7 +1010,11 @@ document.getElementById('btn-delete-confirm')?.addEventListener('click', async (
             _method:      'DELETE',
         });
         window.location.href = res.data?.redirect ?? '/dashboard';
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) {
+        btn.disabled = false;
+        btn.textContent = orig;
+        showToast(err.message, 'error');
+    }
 });
 
 // ─── Card: ellipsis button hover show ────────────────────────────────────────
@@ -838,13 +1025,23 @@ document.querySelectorAll('.card-wrapper').forEach(wrapper => {
     wrapper.addEventListener('mouseleave', () => btn.style.opacity = '0');
 });
 
+// ─── Sidebar: New/Join workspace (redirect to dashboard) ─────────────────────
+document.getElementById('btn-new-workspace')?.addEventListener('click', () => {
+    window.location.href = '/dashboard';
+});
+document.getElementById('btn-join-workspace')?.addEventListener('click', () => {
+    window.location.href = '/dashboard';
+});
+
 // ─── Card: init card grid module ─────────────────────────────────────────────
-import { initCardGrid, handleCardAction, updateProgressBar } from '/js/modules/card.js';
+import { initCardGrid, handleCardAction, updateProgressBar, updateWorkspaceProgress } from '/js/modules/card.js';
 import { initTodoList } from '/js/modules/todo.js';
 initCardGrid(WS_ID, <?= $isAdmin ? 'true' : 'false' ?>);
 document.querySelectorAll('[data-todo-card-id]').forEach(panel => {
     initTodoList(parseInt(panel.dataset.todoCardId, 10));
 });
+
+initActivitySearch(WS_ID);
 
 // Expose handleCardAction globally (used in inline onclick in PHP-rendered HTML)
 window.handleCardAction = handleCardAction;
@@ -888,7 +1085,7 @@ document.getElementById('form-edit-card')?.addEventListener('submit', async (e) 
             card_id:      parseInt(cardId),
             workspace_id: WS_ID,
             title:        document.getElementById('edit-card-title').value,
-            deadline:     document.getElementById('edit-card-deadline').value || null,
+            deadline:     document.getElementById('edit-card-deadline').value,
             _method:      'PATCH',
         });
         closeModal('modal-edit-card');
@@ -903,52 +1100,101 @@ document.getElementById('form-edit-card')?.addEventListener('submit', async (e) 
 
 // ─── Card: Delete ─────────────────────────────────────────────────────────────
 document.getElementById('btn-delete-card-confirm')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-delete-card-confirm');
     const cardId = document.getElementById('delete-card-id').value;
-    closeModal('modal-delete-card');
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = 'Menghapus...';
     try {
         await apiPost('/api/card/delete', {
             card_id:      parseInt(cardId),
             workspace_id: WS_ID,
             _method:      'DELETE',
         });
-        const wrapper = document.querySelector(`.card-wrapper:has([data-card-id="${cardId}"])`);
-        if (wrapper) { wrapper.style.opacity = '0'; setTimeout(() => wrapper.remove(), 300); }
+        closeModal('modal-delete-card');
         showToast('Card dihapus', 'success');
-    } catch (err) { showToast(err.message, 'error'); }
+        // Reload to refresh workspace progress (BUG-15)
+        setTimeout(() => location.reload(), 400);
+    } catch (err) {
+        btn.disabled = false;
+        btn.textContent = orig;
+        showToast(err.message, 'error');
+    }
 });
 document.getElementById('btn-delete-card-cancel')?.addEventListener('click', () => closeModal('modal-delete-card'));
 
 // ─── Card Access: grant/revoke ────────────────────────────────────────────────
-window.grantAccess = async (btn, userId) => {
-    const cardId = document.getElementById('access-card-id').value;
+document.getElementById('access-member-list')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-access-action]');
+    if (!btn) return;
+    const action = btn.dataset.accessAction;
+    const userId = parseInt(btn.dataset.userId, 10);
+    const cardId = parseInt(document.getElementById('access-card-id').value, 10);
+    if (!cardId) return;
     btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = '...';
     try {
-        await apiPost('/api/card/access/grant', {
-            card_id:      parseInt(cardId),
-            workspace_id: WS_ID,
-            user_id:      userId,
-        });
-        showToast('Akses diberikan', 'success');
+        if (action === 'grant') {
+            await apiPost('/api/card/access/grant', {
+                card_id:      cardId,
+                workspace_id: WS_ID,
+                user_id:      userId,
+            });
+            showToast('Akses diberikan', 'success');
+        } else {
+            await apiPost('/api/card/access/revoke', {
+                card_id:      cardId,
+                workspace_id: WS_ID,
+                user_id:      userId,
+                _method:      'DELETE',
+            });
+            showToast('Akses dicabut', 'success');
+        }
     } catch (err) {
-        btn.disabled = false;
         showToast(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
     }
-};
+});
 
-window.revokeAccess = async (btn, userId) => {
-    const cardId = document.getElementById('access-card-id').value;
-    btn.disabled = true;
+// ─── Card menu dropdown actions (BUG-03 — no inline onclick) ─────────────────
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-card-menu]');
+    if (!btn) return;
+    const action = btn.dataset.cardMenu;
+    const cardId = parseInt(btn.dataset.cardId, 10);
+    const cardTitle = btn.dataset.cardTitle || '';
+    handleCardAction(action, cardId, cardTitle);
+});
+
+// ─── Realtime polling for pending join requests ──────────────────────────────
+<?php if ($isAdmin): ?>
+let pollCount = 0;
+const pollInterval = setInterval(async () => {
+    pollCount++;
+    if (pollCount > 120) { clearInterval(pollInterval); return; } // 10 min max
+    const membersTab = document.querySelector('.tab-btn[data-tab="members"]');
+    if (!membersTab) return;
     try {
-        await apiPost('/api/card/access/revoke', {
-            card_id:      parseInt(cardId),
-            workspace_id: WS_ID,
-            user_id:      userId,
-            _method:      'DELETE',
-        });
-        showToast('Akses dicabut', 'success');
-    } catch (err) {
-        btn.disabled = false;
-        showToast(err.message, 'error');
-    }
-};
+        const res = await apiGet('/api/workspace/pending-count', { workspace_id: WS_ID });
+        if (res.data && res.data.count > 0) {
+            // Show badge on members tab
+            let badge = membersTab.querySelector('.pending-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'badge badge-warning pending-badge';
+                badge.style.marginLeft = '6px';
+                badge.style.fontSize = '10px';
+                membersTab.appendChild(badge);
+            }
+            badge.textContent = res.data.count;
+        } else {
+            const badge = membersTab.querySelector('.pending-badge');
+            if (badge) badge.remove();
+        }
+    } catch {}
+}, 5000);
+<?php endif; ?>
 </script>

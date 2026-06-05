@@ -20,7 +20,7 @@ class Request
 
         $rawMethod = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
-        if ($rawMethod === 'POST') {
+        if (in_array($rawMethod, ['POST', 'PATCH', 'DELETE'], true)) {
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 
             if (str_contains($contentType, 'application/json')) {
@@ -30,9 +30,13 @@ class Request
                 $this->body = $_POST;
             }
 
-            // Method override: POST + _method=PATCH|DELETE
-            $override = strtoupper($this->body['_method'] ?? '');
-            $this->method = in_array($override, ['PATCH', 'DELETE'], true) ? $override : 'POST';
+            if ($rawMethod === 'POST') {
+                // Method override: POST + _method=PATCH|DELETE
+                $override = strtoupper($this->body['_method'] ?? '');
+                $this->method = in_array($override, ['PATCH', 'DELETE'], true) ? $override : 'POST';
+            } else {
+                $this->method = $rawMethod;
+            }
         } else {
             $this->method = $rawMethod;
         }

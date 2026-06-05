@@ -14,7 +14,7 @@ class AuthController extends BaseController
 {
     public function redirectDashboard(): void
     {
-        if (!empty($_SESSION['user_id'])) {
+        if (!empty($_SESSION['user_id']) && Session::checkIdle()) {
             Response::redirect('/dashboard');
         }
         Response::redirect('/login');
@@ -156,6 +156,7 @@ class AuthController extends BaseController
 
     public function logout(): void
     {
+        $this->requireAuth();
         $this->requireCsrf();
 
         $isProduction = (APP_ENV === 'production');
@@ -173,6 +174,6 @@ class AuthController extends BaseController
         Session::start();
         CsrfManager::rotate();
 
-        Response::redirect('/login');
+        Response::success(['redirect' => '/login'], 'Berhasil keluar');
     }
 }

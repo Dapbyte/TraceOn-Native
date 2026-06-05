@@ -71,8 +71,10 @@ class CardController extends BaseController
 
         $card = $this->requireCardInWorkspace($cardId, $workspaceId);
 
+        $body = $this->request->getBody();
         $title    = trim((string)$this->request->input('title', $card['title']));
-        $deadline = $this->request->input('deadline', $card['deadline']);
+        
+        $deadline = array_key_exists('deadline', $body) ? $body['deadline'] : $this->request->input('deadline', $card['deadline']);
         $deadline = $deadline !== null ? trim((string)$deadline) : null;
 
         if (mb_strlen($title) < 3 || mb_strlen($title) > 100) {
@@ -118,15 +120,23 @@ class CardController extends BaseController
         $cardTitle = $card['title'];
         $userId    = (int)$_SESSION['user_id'];
 
-        // Log BEFORE delete so cardId still exists in cards table (not required by schema but good practice)
-        $action = ActivityLogger::buildAction('card_delete', [
-            'user' => $_SESSION['user_name'],
-            'card' => $cardTitle,
-        ]);
-        ActivityLogger::log($workspaceId, $userId, $cardId, 'card_delete', $cardTitle, null, $action);
+        $db = Database::getInstance();
+        $db->beginTransaction();
+        try {
+            // Log BEFORE delete so cardId still exists in cards table (not required by schema but good practice)
+            $action = ActivityLogger::buildAction('card_delete', [
+                'user' => $_SESSION['user_name'],
+                'card' => $cardTitle,
+            ]);
+            ActivityLogger::log($workspaceId, $userId, $cardId, 'card_delete', $cardTitle, null, $action);
 
-        // FK CASCADE removes todos and card_access
-        CardModel::delete($cardId);
+            // FK CASCADE removes todos and card_access
+            CardModel::delete($cardId);
+            $db->commit();
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            Response::error('SERVER_ERROR', 'Gagal menghapus card', 500);
+        }
 
         Response::success(null, 'Card berhasil dihapus');
     }
@@ -142,7 +152,7 @@ class CardController extends BaseController
         $workspaceId = (int)$this->request->input('workspace_id', 0);
         $this->requireWorkspaceMember($workspaceId, 'Admin');
 
-        $this->requireCardInWorkspace($cardId, $workspaceId);
+        $card = $this->requireCardInWorkspace($cardId, $workspaceId);
 
         // Verify target is an Approved member
         $targetMembership = MemberModel::getMembership($targetUserId, $workspaceId);
@@ -152,22 +162,30 @@ class CardController extends BaseController
 
         $actorId = (int)$_SESSION['user_id'];
 
+        $db = Database::getInstance();
+        $db->beginTransaction();
         try {
             CardModel::insertAccess($cardId, $targetUserId, $actorId);
+
+            $action = ActivityLogger::buildAction('access_grant', [
+                'actor' => $_SESSION['user_name'],
+                'card'  => $card['title'],
+                'user'  => $targetMembership['user_name'],
+            ]);
+            ActivityLogger::log($workspaceId, $actorId, $cardId, 'access_grant', null, null, $action);
+
+            $db->commit();
         } catch (\PDOException $e) {
+            $db->rollBack();
             // UNIQUE constraint violation = duplicate grant
             if (str_contains($e->getMessage(), '1062') || str_contains($e->getMessage(), 'Duplicate')) {
                 Response::error('CONFLICT', 'Anggota ini sudah memiliki akses ke card tersebut', 409);
             }
-            throw $e;
+            Response::error('SERVER_ERROR', 'Gagal memberikan akses', 500);
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            Response::error('SERVER_ERROR', 'Gagal memberikan akses', 500);
         }
-
-        $action = ActivityLogger::buildAction('access_grant', [
-            'actor' => $_SESSION['user_name'],
-            'card'  => CardModel::findById($cardId)['title'] ?? '',
-            'user'  => $targetMembership['user_name'],
-        ]);
-        ActivityLogger::log($workspaceId, $actorId, $cardId, 'access_grant', null, null, $action);
 
         Response::success(null, 'Akses diberikan');
     }

@@ -10,6 +10,17 @@ function getCsrfToken() {
     return meta.getAttribute('content');
 }
 
+function handleSessionExpired(code) {
+    if (code === 'UNAUTHENTICATED' || code === 'SESSION_EXPIRED') {
+        if (!window.__sessionRedirecting) {
+            window.__sessionRedirecting = true;
+            window.location.href = '/login?reason=expired';
+        }
+        return true;
+    }
+    return false;
+}
+
 /**
  * POST (or method-overridden PATCH/DELETE) request.
  * @param {string} path
@@ -40,7 +51,11 @@ export async function apiPost(path, body = {}) {
         }
 
         if (!data.success) {
-            throw { code: data.error ?? 'SERVER_ERROR', message: data.message ?? 'Terjadi kesalahan.', status: res.status };
+            const code = data.error ?? 'SERVER_ERROR';
+            if (handleSessionExpired(code)) {
+                throw { code, message: data.message ?? '', status: res.status };
+            }
+            throw { code, message: data.message ?? 'Terjadi kesalahan.', status: res.status, errors: data.errors };
         }
 
         return data;
@@ -57,9 +72,8 @@ export async function apiPost(path, body = {}) {
  * @returns {Promise<object>} resolved data on success
  */
 export async function apiGet(path, params = {}) {
-    const url = Object.keys(params).length
-        ? path + '?' + new URLSearchParams(params).toString()
-        : path;
+    const query = buildQuery(params);
+    const url = query ? path + '?' + query : path;
 
     try {
         const res = await fetch(url, {
@@ -75,7 +89,11 @@ export async function apiGet(path, params = {}) {
         }
 
         if (!data.success) {
-            throw { code: data.error ?? 'SERVER_ERROR', message: data.message ?? 'Terjadi kesalahan.', status: res.status };
+            const code = data.error ?? 'SERVER_ERROR';
+            if (handleSessionExpired(code)) {
+                throw { code, message: data.message ?? '', status: res.status };
+            }
+            throw { code, message: data.message ?? 'Terjadi kesalahan.', status: res.status };
         }
 
         return data;
@@ -83,4 +101,24 @@ export async function apiGet(path, params = {}) {
         if (err.code) throw err;
         throw { code: 'NETWORK_ERROR', message: 'Koneksi terputus. Coba refresh halaman.', status: 0 };
     }
+}
+
+function buildQuery(params) {
+    const query = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(params || {})) {
+        if (value === null || value === undefined || value === '') continue;
+
+        if (Array.isArray(value)) {
+            for (const item of value) {
+                if (item === null || item === undefined || item === '') continue;
+                query.append(key, String(item));
+            }
+            continue;
+        }
+
+        query.append(key, String(value));
+    }
+
+    return query.toString();
 }

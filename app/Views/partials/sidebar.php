@@ -36,9 +36,8 @@ $currentPath      = $_SERVER['REQUEST_URI'] ?? '';
         <button
             type="button"
             id="btn-join-workspace"
+            class="sidebar-join-btn"
             style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--radius-md);background:transparent;border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.85);cursor:pointer;font-size:var(--text-sm);font-weight:500;margin-bottom:16px;transition:background-color 0.2s;"
-            onmouseover="this.style.background='rgba(255,255,255,0.1)'"
-            onmouseout="this.style.background='transparent'"
         >
             <span class="iconify" data-icon="ph:sign-in-bold" style="width:16px;height:16px;flex-shrink:0"></span>
             <span class="sidebar-label">Join Workspace</span>

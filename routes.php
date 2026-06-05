@@ -27,6 +27,8 @@ $router->post('/api/workspace/rename',           'WorkspaceController@rename');
 $router->post('/api/workspace/update-deadline',  'WorkspaceController@updateDeadline');
 $router->post('/api/workspace/join-request',     'WorkspaceController@joinRequest');
 $router->post('/api/workspace/approve-request',  'WorkspaceController@approveRequest');
+$router->get('/api/workspace/progress',          'WorkspaceController@progressApi');
+$router->get('/api/workspace/pending-count',     'WorkspaceController@pendingCountApi');
 
 // ─── Member API ────────────────────────────────────────────────────────────
 $router->post('/api/member/role-update', 'MemberController@updateRole');

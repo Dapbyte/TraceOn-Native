@@ -376,4 +376,36 @@ class WorkspaceController extends BaseController
 
         Response::success(null, $msg);
     }
+
+    public function progressApi(): void
+    {
+        $this->requireAuth();
+
+        $workspaceId = (int)$this->request->query('workspace_id', 0);
+        if ($workspaceId === 0) {
+            Response::error('VALIDATION_ERROR', 'workspace_id diperlukan', 422);
+        }
+
+        $this->requireWorkspaceMember($workspaceId, 'Member');
+
+        $progress = ProgressCalculator::forWorkspace($workspaceId);
+
+        Response::success(['progress' => $progress]);
+    }
+
+    public function pendingCountApi(): void
+    {
+        $this->requireAuth();
+
+        $workspaceId = (int)$this->request->query('workspace_id', 0);
+        if ($workspaceId === 0) {
+            Response::error('VALIDATION_ERROR', 'workspace_id diperlukan', 422);
+        }
+
+        $this->requireWorkspaceMember($workspaceId, 'Admin');
+
+        $pending = \App\Models\MemberModel::listPendingForWorkspace($workspaceId);
+
+        Response::success(['count' => count($pending)]);
+    }
 }

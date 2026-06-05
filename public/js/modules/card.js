@@ -52,6 +52,19 @@ export function updateProgressBar(cardId, progress) {
     });
 }
 
+export function updateWorkspaceProgress() {
+    if (!_workspaceId) return;
+    fetch('/api/workspace/progress?workspace_id=' + _workspaceId)
+        .then(r => r.json())
+        .then(res => {
+            const el = document.getElementById('ws-progress-value');
+            if (el && res.data) {
+                el.textContent = res.data.progress + '%';
+            }
+        })
+        .catch(() => {});
+}
+
 // ─── Dropdown (desktop) ────────────────────────────────────────────────────────
 function toggleDropdown(btn) {
     const dropdown = btn.closest('.card-wrapper')?.querySelector('.card-dropdown');
@@ -165,6 +178,29 @@ function openCardDetail(cardId) {
         panel.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         panel.querySelector('[data-card-detail-close]')?.focus();
-        history.pushState(null, '', `/workspace/${_workspaceId}/card/${cardId}`);
+        if (window.location.hash !== `#card=${cardId}`) {
+            history.pushState({ cardId }, '', `#card=${cardId}`);
+        }
     }
 }
+
+function closeAllCardDetails() {
+    document.querySelectorAll('.card-detail-backdrop').forEach(p => {
+        if (p.style.display !== 'none') p.style.display = 'none';
+    });
+    document.body.style.overflow = '';
+}
+
+// Sync panel with browser back/forward
+window.addEventListener('popstate', () => {
+    const match = window.location.hash.match(/^#card=(\d+)$/);
+    if (match) {
+        const panel = document.getElementById(`card-detail-${match[1]}`);
+        if (panel && panel.style.display === 'none') {
+            panel.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    } else {
+        closeAllCardDetails();
+    }
+});

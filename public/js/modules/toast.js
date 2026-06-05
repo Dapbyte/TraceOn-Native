@@ -7,8 +7,16 @@
 let container = null;
 
 export function initToastContainer() {
-    if (container) return;
+    if (container && document.body.contains(container)) return;
+    const existing = document.getElementById('toast-container');
+    if (existing) {
+        container = existing;
+        container.setAttribute('aria-live', 'polite');
+        container.setAttribute('aria-atomic', 'false');
+        return;
+    }
     container = document.createElement('div');
+    container.id = 'toast-container';
     container.className = 'toast-container';
     container.setAttribute('aria-live', 'polite');
     container.setAttribute('aria-atomic', 'false');

@@ -85,11 +85,11 @@ class Router
         header('Referrer-Policy: strict-origin-when-cross-origin');
         header(
             "Content-Security-Policy: default-src 'self'; " .
-            "script-src 'self' https://cdn.jsdelivr.net; " .
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " .
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " .
             "font-src 'self' https://fonts.gstatic.com; " .
-            "img-src 'self' data: blob:; " .
-            "connect-src 'self'; " .
+            "img-src 'self' data: blob: https://api.iconify.design; " .
+            "connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com; " .
             "form-action 'self'; " .
             "frame-ancestors 'none'"
         );

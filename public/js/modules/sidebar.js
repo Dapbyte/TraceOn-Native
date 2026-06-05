@@ -6,8 +6,8 @@
 const STORAGE_KEY = 'traceon_accordion_state';
 
 export function initSidebar() {
-    const sidebar      = document.getElementById('sidebar');
-    const overlay      = document.getElementById('sidebar-overlay');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
     const hamburgerBtn = document.getElementById('hamburger-btn');
 
     if (!sidebar) return;
@@ -17,8 +17,8 @@ export function initSidebar() {
     document.querySelectorAll('.sidebar-accordion-trigger').forEach(trigger => {
         trigger.addEventListener('click', () => {
             const targetId = trigger.getAttribute('data-target');
-            const content  = document.getElementById(targetId);
-            const arrow    = trigger.querySelector('.sidebar-accordion-arrow');
+            const content = document.getElementById(targetId);
+            const arrow = trigger.querySelector('.sidebar-accordion-arrow');
             if (!content) return;
             const isOpen = content.classList.toggle('open');
             trigger.setAttribute('aria-expanded', String(isOpen));
@@ -26,6 +26,7 @@ export function initSidebar() {
             saveAccordionState();
         });
     });
+
 
     // Mobile hamburger
     if (hamburgerBtn && overlay) {
@@ -53,16 +54,16 @@ function saveAccordionState() {
     document.querySelectorAll('.sidebar-accordion-trigger').forEach(t => {
         state[t.getAttribute('data-target')] = t.getAttribute('aria-expanded') === 'true';
     });
-    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { }
 }
 
 function restoreAccordionState() {
     let state = {};
-    try { const r = sessionStorage.getItem(STORAGE_KEY); if (r) state = JSON.parse(r); } catch {}
+    try { const r = sessionStorage.getItem(STORAGE_KEY); if (r) state = JSON.parse(r); } catch { }
     document.querySelectorAll('.sidebar-accordion-trigger').forEach(trigger => {
         const targetId = trigger.getAttribute('data-target');
-        const content  = document.getElementById(targetId);
-        const arrow    = trigger.querySelector('.sidebar-accordion-arrow');
+        const content = document.getElementById(targetId);
+        const arrow = trigger.querySelector('.sidebar-accordion-arrow');
         if (!content) return;
         const isOpen = state[targetId] !== false;
         content.classList.toggle('open', isOpen);

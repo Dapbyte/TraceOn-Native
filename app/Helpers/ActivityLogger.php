@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Helpers;
 
-use App\Core\Database;
+use App\Models\ActivityModel;
 
 class ActivityLogger
 {
@@ -22,13 +22,7 @@ class ActivityLogger
         ?string $newValue,
         string $actionText
     ): void {
-        $db   = Database::getInstance();
-        $stmt = $db->prepare(
-            'INSERT INTO activities
-               (workspace_id, user_id, card_id, activity_type, old_value, new_value, action)
-             VALUES (?, ?, ?, ?, ?, ?, ?)'
-        );
-        $stmt->execute([$workspaceId, $userId, $cardId, $activityType, $oldValue, $newValue, $actionText]);
+        ActivityModel::insert($workspaceId, $userId, $cardId, $activityType, $oldValue, $newValue, $actionText);
     }
 
     public static function buildAction(string $activityType, array $vars): string
@@ -40,7 +34,7 @@ class ActivityLogger
         $template = self::$templates[$activityType] ?? $activityType;
 
         foreach ($vars as $key => $value) {
-            $template = str_replace('{' . $key . '}', htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'), $template);
+            $template = str_replace('{' . $key . '}', (string)$value, $template);
         }
 
         return $template;

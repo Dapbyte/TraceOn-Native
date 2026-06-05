@@ -94,6 +94,10 @@ $userAvatar = htmlspecialchars($user['avatar_path'] ?? '', ENT_QUOTES, 'UTF-8');
 import { apiPost } from '/js/modules/api.js';
 import { showToast } from '/js/modules/toast.js';
 
+// Sidebar new/join workspace → dashboard
+document.getElementById('btn-new-workspace')?.addEventListener('click', () => { window.location.href = '/dashboard'; });
+document.getElementById('btn-join-workspace')?.addEventListener('click', () => { window.location.href = '/dashboard'; });
+
 // Avatar file preview
 const avatarInput = document.getElementById('avatar');
 avatarInput.addEventListener('change', () => {

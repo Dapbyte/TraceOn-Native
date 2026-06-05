@@ -98,8 +98,9 @@ class TodoController extends BaseController
         [$card, $workspaceId] = $this->resolveAndAuthorize($cardId);
         $userId = (int)$_SESSION['user_id'];
 
-        $newTitle  = $this->request->input('title');
-        $newStatus = $this->request->input('status');
+        $newTitle    = $this->request->input('title');
+        $newStatus   = $this->request->input('status');
+        $newPriority = $this->request->input('priority');
 
         if ($newTitle !== null) {
             $newTitle = trim((string)$newTitle);
@@ -110,6 +111,10 @@ class TodoController extends BaseController
 
         if ($newStatus !== null && !TodoModel::isValidStatus((string)$newStatus)) {
             Response::error('VALIDATION_ERROR', 'Status tidak valid', 422);
+        }
+
+        if ($newPriority !== null && !TodoModel::isValidPriority((string)$newPriority)) {
+            Response::error('VALIDATION_ERROR', 'Prioritas tidak valid', 422);
         }
 
         $db = Database::getInstance();
@@ -134,6 +139,17 @@ class TodoController extends BaseController
                     'new'  => $newStatus,
                 ]);
                 ActivityLogger::log($workspaceId, $userId, $cardId, 'todo_status', $todo['status'], (string)$newStatus, $action);
+            }
+
+            if ($newPriority !== null && $newPriority !== ($todo['priority'] ?? 'medium')) {
+                TodoModel::updatePriority($todoId, (string)$newPriority);
+                $action = ActivityLogger::buildAction('todo_edit', [
+                    'user' => $_SESSION['user_name'],
+                    'todo' => $newTitle !== null ? $newTitle : $todo['title'],
+                    'old'  => 'priority:' . ($todo['priority'] ?? 'medium'),
+                    'new'  => 'priority:' . $newPriority,
+                ]);
+                ActivityLogger::log($workspaceId, $userId, $cardId, 'todo_edit', $todo['priority'] ?? 'medium', $newPriority, $action);
             }
 
             $progress = ProgressCalculator::forCard($cardId);

@@ -31,19 +31,21 @@ class ProgressCalculator
     public static function forWorkspace(int $workspaceId): float
     {
         $db   = Database::getInstance();
-        $stmt = $db->prepare('SELECT id FROM cards WHERE workspace_id = ?');
-        $stmt->execute([$workspaceId]);
-        $cards = $stmt->fetchAll();
+        $stmt = $db->prepare(
+            'SELECT
+               COUNT(*) AS total,
+               SUM(CASE WHEN t.status = ? THEN 1 ELSE 0 END) AS done
+             FROM cards c
+             JOIN todos t ON t.card_id = c.id
+             WHERE c.workspace_id = ?'
+        );
+        $stmt->execute(['done', $workspaceId]);
+        $row = $stmt->fetch();
 
-        if (empty($cards)) {
+        if (!$row || (int)$row['total'] === 0) {
             return 0.0;
         }
 
-        $total = 0;
-        foreach ($cards as $card) {
-            $total += self::forCard((int)$card['id']);
-        }
-
-        return round($total / count($cards), 1);
+        return round(((int)$row['done'] / (int)$row['total']) * 100, 1);
     }
 }
